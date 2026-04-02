@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { getOne, getAll } from '@/lib/db';
 import { checkAlertsForProperty } from '@/lib/alerts';
 
 export async function GET() {
   try {
-    const properties = db
-      .prepare(
-        `SELECT p.*,
-          (SELECT json_group_array(json_object(
-            'id', pi.id,
-            'filename', pi.filename,
-            'original_name', pi.original_name,
-            'is_cover', pi.is_cover
-          )) FROM property_images pi WHERE pi.property_id = p.id) as images
-        FROM properties p
-        WHERE p.status = 'active'
-        ORDER BY p.created_at DESC`
-      )
-      .all();
+    const properties = await getAll(
+      `SELECT p.*,
+        COALESCE((SELECT json_agg(json_build_object(
+          'id', pi.id,
+          'filename', pi.filename,
+          'original_name', pi.original_name,
+          'is_cover', pi.is_cover
+        )) FROM property_images pi WHERE pi.property_id = p.id), '[]'::json) as images
+      FROM properties p
+      WHERE p.status = 'active'
+      ORDER BY p.created_at DESC`
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsed = (properties as any[]).map((p: Record<string, unknown>) => ({
       ...p,
       characteristics: p.characteristics ? JSON.parse(p.characteristics as string) : [],
       details: p.details ? JSON.parse(p.details as string) : {},
-      images: p.images ? JSON.parse(p.images as string) : [],
+      images: typeof p.images === 'string' ? JSON.parse(p.images as string) : (p.images || []),
     }));
 
     return NextResponse.json(parsed);
@@ -63,12 +61,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = db
-      .prepare(
-        `INSERT INTO properties (title, description, price, area, type, address, city, state, neighborhood, characteristics, details, latitude, longitude)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .run(
+    const result = await getOne(
+      `INSERT INTO properties (title, description, price, area, type, address, city, state, neighborhood, characteristics, details, latitude, longitude)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       RETURNING id`,
+      [
         title,
         description,
         price,
@@ -81,16 +78,15 @@ export async function POST(request: NextRequest) {
         characteristics ? JSON.stringify(characteristics) : null,
         details ? JSON.stringify(details) : null,
         latitude || null,
-        longitude || null
-      );
+        longitude || null,
+      ]
+    );
 
-    const property = db
-      .prepare('SELECT * FROM properties WHERE id = ?')
-      .get(result.lastInsertRowid);
+    const property = await getOne('SELECT * FROM properties WHERE id = $1', [result.id]);
 
     // Check all active search alerts against the new property
     try {
-      checkAlertsForProperty(Number(result.lastInsertRowid));
+      await checkAlertsForProperty(Number(result.id));
     } catch (err) {
       console.error('Error checking alerts for new property:', err);
     }

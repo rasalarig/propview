@@ -1,4 +1,5 @@
 import { PropertyListClient } from "@/components/property-list-client";
+import { getAll, getOne } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -23,17 +24,18 @@ interface Property {
 }
 
 async function getProperties() {
-  const { default: db } = await import("@/lib/db");
-  const properties = db
-    .prepare("SELECT * FROM properties WHERE status = 'active' ORDER BY created_at DESC")
-    .all() as Property[];
+  const properties = await getAll(
+    "SELECT * FROM properties WHERE status = 'active' ORDER BY created_at DESC"
+  ) as Property[];
 
-  const propertiesWithImages = properties.map(p => {
-    const coverImage = db.prepare(
-      "SELECT filename FROM property_images WHERE property_id = ? ORDER BY is_cover DESC LIMIT 1"
-    ).get(p.id) as { filename: string } | undefined;
-    return { ...p, coverImage: coverImage?.filename };
-  });
+  const propertiesWithImages = [];
+  for (const p of properties) {
+    const coverImage = await getOne(
+      "SELECT filename FROM property_images WHERE property_id = $1 ORDER BY is_cover DESC LIMIT 1",
+      [p.id]
+    ) as { filename: string } | null;
+    propertiesWithImages.push({ ...p, coverImage: coverImage?.filename });
+  }
 
   return propertiesWithImages;
 }

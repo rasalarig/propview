@@ -1,4 +1,5 @@
 import { PropertyCard } from "./property-card";
+import { getAll, getOne } from "@/lib/db";
 
 interface Property {
   id: number;
@@ -12,15 +13,18 @@ interface Property {
 }
 
 async function getProperties() {
-  const { default: db } = await import("@/lib/db");
-  const properties = db.prepare("SELECT * FROM properties WHERE status = 'active' ORDER BY created_at DESC LIMIT 6").all() as Property[];
+  const properties = await getAll(
+    "SELECT * FROM properties WHERE status = 'active' ORDER BY created_at DESC LIMIT 6"
+  ) as Property[];
 
-  const propertiesWithImages = properties.map(p => {
-    const coverImage = db.prepare(
-      "SELECT filename FROM property_images WHERE property_id = ? ORDER BY is_cover DESC LIMIT 1"
-    ).get(p.id) as { filename: string } | undefined;
-    return { ...p, coverImage: coverImage?.filename };
-  });
+  const propertiesWithImages = [];
+  for (const p of properties) {
+    const coverImage = await getOne(
+      "SELECT filename FROM property_images WHERE property_id = $1 ORDER BY is_cover DESC LIMIT 1",
+      [p.id]
+    ) as { filename: string } | null;
+    propertiesWithImages.push({ ...p, coverImage: coverImage?.filename });
+  }
 
   return propertiesWithImages;
 }
@@ -34,8 +38,8 @@ export async function FeaturedProperties() {
     <section className="py-16 px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Imóveis em Destaque</h2>
-          <p className="text-muted-foreground">Os melhores terrenos e imóveis do interior de São Paulo</p>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Imoveis em Destaque</h2>
+          <p className="text-muted-foreground">Os melhores terrenos e imoveis do interior de Sao Paulo</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

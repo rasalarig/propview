@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import db from '@/lib/db';
+import { getAll } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,26 +12,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'property_ids array is required' }, { status: 400 });
     }
 
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     const result: Record<number, { favorited: boolean; likes_count: number }> = {};
 
-    // Get likes counts for all requested properties
-    const placeholders = property_ids.map(() => '?').join(',');
-    const likeCounts = db.prepare(
-      `SELECT property_id, COUNT(*) as count FROM favorites WHERE property_id IN (${placeholders}) GROUP BY property_id`
-    ).all(...property_ids) as Array<{ property_id: number; count: number }>;
+    // Get likes counts for all requested properties using ANY
+    const likeCounts = await getAll(
+      `SELECT property_id, COUNT(*) as count FROM favorites WHERE property_id = ANY($1::int[]) GROUP BY property_id`,
+      [property_ids]
+    ) as Array<{ property_id: number; count: string }>;
 
     const likeCountMap: Record<number, number> = {};
     for (const row of likeCounts) {
-      likeCountMap[row.property_id] = row.count;
+      likeCountMap[row.property_id] = parseInt(row.count, 10);
     }
 
     // Get user's favorites if logged in
     let userFavorites: Set<number> = new Set();
     if (user) {
-      const favRows = db.prepare(
-        `SELECT property_id FROM favorites WHERE user_id = ? AND property_id IN (${placeholders})`
-      ).all(user.id, ...property_ids) as Array<{ property_id: number }>;
+      const favRows = await getAll(
+        `SELECT property_id FROM favorites WHERE user_id = $1 AND property_id = ANY($2::int[])`,
+        [user.id, property_ids]
+      ) as Array<{ property_id: number }>;
       userFavorites = new Set(favRows.map(r => r.property_id));
     }
 

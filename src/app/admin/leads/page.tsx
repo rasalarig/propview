@@ -1,4 +1,5 @@
 import { AdminLeadsList } from "@/components/admin-leads-list";
+import { getAll, getOne } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -22,20 +23,23 @@ interface Lead {
 }
 
 async function getLeads() {
-  const { default: db } = await import("@/lib/db");
-
-  const leads = db.prepare(`
+  const leads = await getAll(`
     SELECT l.*, p.title as property_title, p.city as property_city
     FROM leads l
     JOIN properties p ON l.property_id = p.id
     ORDER BY l.created_at DESC
-  `).all() as Lead[];
+  `) as Lead[];
+
+  const totalRow = await getOne("SELECT COUNT(*) as count FROM leads") as { count: string };
+  const novoRow = await getOne("SELECT COUNT(*) as count FROM leads WHERE status = 'novo'") as { count: string };
+  const contatadoRow = await getOne("SELECT COUNT(*) as count FROM leads WHERE status = 'contatado'") as { count: string };
+  const convertidoRow = await getOne("SELECT COUNT(*) as count FROM leads WHERE status = 'convertido'") as { count: string };
 
   const stats = {
-    total: (db.prepare("SELECT COUNT(*) as count FROM leads").get() as { count: number }).count,
-    novo: (db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'novo'").get() as { count: number }).count,
-    contatado: (db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'contatado'").get() as { count: number }).count,
-    convertido: (db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'convertido'").get() as { count: number }).count,
+    total: parseInt(totalRow.count, 10),
+    novo: parseInt(novoRow.count, 10),
+    contatado: parseInt(contatadoRow.count, 10),
+    convertido: parseInt(convertidoRow.count, 10),
   };
 
   return { leads, stats };

@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { randomUUID } from 'crypto';
-import db from './db';
+import { query, getOne } from './db';
 
 const COOKIE_NAME = 'session_id';
 const SESSION_DURATION_DAYS = 7;
@@ -18,13 +18,14 @@ export function generateSessionId(): string {
   return randomUUID();
 }
 
-export function createSession(userId: number): string {
+export async function createSession(userId: number): Promise<string> {
   const sessionId = generateSessionId();
   const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-  db.prepare(
-    'INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)'
-  ).run(sessionId, userId, expiresAt);
+  await query(
+    'INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)',
+    [sessionId, userId, expiresAt]
+  );
 
   return sessionId;
 }
@@ -39,28 +40,29 @@ export function setSessionCookie(sessionId: string) {
   });
 }
 
-export function getCurrentUser(): User | null {
+export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = cookies();
   const sessionId = cookieStore.get(COOKIE_NAME)?.value;
 
   if (!sessionId) return null;
 
-  const row = db.prepare(`
-    SELECT u.id, u.name, u.email, u.avatar_url, u.provider, u.created_at
-    FROM sessions s
-    JOIN users u ON s.user_id = u.id
-    WHERE s.id = ? AND s.expires_at > datetime('now')
-  `).get(sessionId) as User | undefined;
+  const row = await getOne(
+    `SELECT u.id, u.name, u.email, u.avatar_url, u.provider, u.created_at
+     FROM sessions s
+     JOIN users u ON s.user_id = u.id
+     WHERE s.id = $1 AND s.expires_at > NOW()`,
+    [sessionId]
+  );
 
-  return row ?? null;
+  return row as User | null;
 }
 
-export function logout() {
+export async function logout() {
   const cookieStore = cookies();
   const sessionId = cookieStore.get(COOKIE_NAME)?.value;
 
   if (sessionId) {
-    db.prepare('DELETE FROM sessions WHERE id = ?').run(sessionId);
+    await query('DELETE FROM sessions WHERE id = $1', [sessionId]);
   }
 
   cookieStore.set(COOKIE_NAME, '', {
@@ -71,21 +73,22 @@ export function logout() {
   });
 }
 
-export function upsertUser(email: string, name: string): User {
-  const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User | undefined;
+export async function upsertUser(email: string, name: string): Promise<User> {
+  const existing = await getOne('SELECT * FROM users WHERE email = $1', [email]) as User | null;
 
   if (existing) {
-    // Update name if provided and different
     if (name && name !== existing.name) {
-      db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, existing.id);
+      await query('UPDATE users SET name = $1 WHERE id = $2', [name, existing.id]);
       existing.name = name;
     }
     return existing;
   }
 
-  const result = db.prepare(
-    'INSERT INTO users (name, email, provider) VALUES (?, ?, ?)'
-  ).run(name, email, 'local');
+  const result = await getOne(
+    'INSERT INTO users (name, email, provider) VALUES ($1, $2, $3) RETURNING id',
+    [name, email, 'local']
+  );
 
-  return db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid) as User;
+  const user = await getOne('SELECT * FROM users WHERE id = $1', [result.id]) as User;
+  return user;
 }

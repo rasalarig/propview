@@ -78,7 +78,15 @@ export function LoginPage() {
         <CardHeader className="text-center space-y-4 pb-2">
           {/* Logo */}
           <div className="flex justify-center">
-            <Image src="/logo.png" alt="PropView" width={168} height={56} className="h-14 w-auto" />
+            <div className="h-20 w-64 mx-auto overflow-hidden relative">
+              <Image
+                src="/logo_novo.png"
+                alt="PropView"
+                width={1536}
+                height={1024}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-auto"
+              />
+            </div>
           </div>
           <div>
             <h1 className="text-2xl font-bold">

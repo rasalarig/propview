@@ -1,29 +1,27 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { getAll } from '@/lib/db';
 
 export async function GET() {
   try {
-    const properties = db
-      .prepare(
-        `SELECT p.*,
-          (SELECT json_group_array(json_object(
-            'id', pi.id,
-            'filename', pi.filename,
-            'original_name', pi.original_name,
-            'is_cover', pi.is_cover
-          )) FROM property_images pi WHERE pi.property_id = p.id) as images
-        FROM properties p
-        WHERE p.status = 'active'
-        ORDER BY RANDOM()`
-      )
-      .all();
+    const properties = await getAll(
+      `SELECT p.*,
+        COALESCE((SELECT json_agg(json_build_object(
+          'id', pi.id,
+          'filename', pi.filename,
+          'original_name', pi.original_name,
+          'is_cover', pi.is_cover
+        )) FROM property_images pi WHERE pi.property_id = p.id), '[]'::json) as images
+      FROM properties p
+      WHERE p.status = 'active'
+      ORDER BY RANDOM()`
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsed = (properties as any[]).map((p: Record<string, unknown>) => ({
       ...p,
       characteristics: p.characteristics ? JSON.parse(p.characteristics as string) : [],
       details: p.details ? JSON.parse(p.details as string) : {},
-      images: p.images ? JSON.parse(p.images as string) : [],
+      images: typeof p.images === 'string' ? JSON.parse(p.images as string) : (p.images || []),
     }));
 
     return NextResponse.json(parsed);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
+import { getOne } from "@/lib/db";
 import fs from "fs";
 import path from "path";
 
@@ -11,9 +11,10 @@ export async function POST(
     const propertyId = Number(params.id);
 
     // Check property exists
-    const property = db
-      .prepare("SELECT id FROM properties WHERE id = ?")
-      .get(propertyId) as { id: number } | undefined;
+    const property = await getOne(
+      "SELECT id FROM properties WHERE id = $1",
+      [propertyId]
+    ) as { id: number } | null;
     if (!property) {
       return NextResponse.json(
         { error: "Property not found" },
@@ -36,14 +37,13 @@ export async function POST(
     }
 
     // Check if property already has a cover image
-    const existingCover = db
-      .prepare(
-        "SELECT id FROM property_images WHERE property_id = ? AND is_cover = 1"
-      )
-      .get(propertyId) as { id: number } | undefined;
+    const existingCover = await getOne(
+      "SELECT id FROM property_images WHERE property_id = $1 AND is_cover = 1",
+      [propertyId]
+    ) as { id: number } | null;
 
     const savedImages: {
-      id: number | bigint;
+      id: number;
       filename: string;
       original_name: string;
       is_cover: number;
@@ -63,19 +63,13 @@ export async function POST(
 
       const isCover = !existingCover && savedImages.length === 0 ? 1 : 0;
 
-      const result = db
-        .prepare(
-          "INSERT INTO property_images (property_id, filename, original_name, is_cover) VALUES (?, ?, ?, ?)"
-        )
-        .run(
-          propertyId,
-          `/uploads/${propertyId}/${filename}`,
-          file.name,
-          isCover
-        );
+      const result = await getOne(
+        "INSERT INTO property_images (property_id, filename, original_name, is_cover) VALUES ($1, $2, $3, $4) RETURNING id",
+        [propertyId, `/uploads/${propertyId}/${filename}`, file.name, isCover]
+      );
 
       savedImages.push({
-        id: result.lastInsertRowid,
+        id: result.id,
         filename: `/uploads/${propertyId}/${filename}`,
         original_name: file.name,
         is_cover: isCover,

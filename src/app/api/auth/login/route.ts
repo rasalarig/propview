@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
     // Auto-generate name from email if not provided
     const userName = name?.trim() || trimmedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-    const user = upsertUser(trimmedEmail, userName);
-    const sessionId = createSession(user.id);
+    const user = await upsertUser(trimmedEmail, userName);
+    const sessionId = await createSession(user.id);
     setSessionCookie(sessionId);
 
     return NextResponse.json({

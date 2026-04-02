@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import db from "@/lib/db";
+import { query, getOne, getAll } from "@/lib/db";
 import { runAlertAgainstAllProperties } from "@/lib/alerts";
 
 export async function GET() {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const alerts = db
-      .prepare(
-        `SELECT sa.*,
-          (SELECT COUNT(*) FROM alert_matches am WHERE am.alert_id = sa.id AND am.seen = 0) as unseen_count,
-          (SELECT COUNT(*) FROM alert_matches am WHERE am.alert_id = sa.id) as total_matches
-        FROM search_alerts sa
-        WHERE sa.user_id = ?
-        ORDER BY sa.created_at DESC`
-      )
-      .all(user.id);
+    const alerts = await getAll(
+      `SELECT sa.*,
+        (SELECT COUNT(*) FROM alert_matches am WHERE am.alert_id = sa.id AND am.seen = 0) as unseen_count,
+        (SELECT COUNT(*) FROM alert_matches am WHERE am.alert_id = sa.id) as total_matches
+      FROM search_alerts sa
+      WHERE sa.user_id = $1
+      ORDER BY sa.created_at DESC`,
+      [user.id]
+    );
 
     return NextResponse.json(alerts);
   } catch (error) {
@@ -33,7 +32,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -50,18 +49,20 @@ export async function POST(request: NextRequest) {
 
     const trimmedPrompt = prompt.trim();
 
-    const result = db
-      .prepare("INSERT INTO search_alerts (user_id, prompt) VALUES (?, ?)")
-      .run(user.id, trimmedPrompt);
+    const result = await getOne(
+      "INSERT INTO search_alerts (user_id, prompt) VALUES ($1, $2) RETURNING id",
+      [user.id, trimmedPrompt]
+    );
 
-    const alertId = Number(result.lastInsertRowid);
+    const alertId = Number(result.id);
 
     // Run the prompt against all existing properties
-    const matchCount = runAlertAgainstAllProperties(alertId, trimmedPrompt);
+    const matchCount = await runAlertAgainstAllProperties(alertId, trimmedPrompt);
 
-    const alert = db
-      .prepare("SELECT * FROM search_alerts WHERE id = ?")
-      .get(alertId);
+    const alert = await getOne(
+      "SELECT * FROM search_alerts WHERE id = $1",
+      [alertId]
+    );
 
     return NextResponse.json(
       { ...(alert as Record<string, unknown>), initial_matches: matchCount },
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -94,15 +95,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check ownership
-    const alert = db
-      .prepare("SELECT * FROM search_alerts WHERE id = ? AND user_id = ?")
-      .get(alert_id, user.id);
+    const alert = await getOne(
+      "SELECT * FROM search_alerts WHERE id = $1 AND user_id = $2",
+      [alert_id, user.id]
+    );
 
     if (!alert) {
       return NextResponse.json({ error: "Alert not found" }, { status: 404 });
     }
 
-    db.prepare("DELETE FROM search_alerts WHERE id = ?").run(alert_id);
+    await query("DELETE FROM search_alerts WHERE id = $1", [alert_id]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PropertyDetail } from "@/components/property-detail";
+import { getOne, getAll } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -32,17 +33,16 @@ interface PropertyImage {
 }
 
 async function getProperty(id: string) {
-  const { default: db } = await import("@/lib/db");
-  const property = db
-    .prepare("SELECT * FROM properties WHERE id = ?")
-    .get(Number(id)) as Property | undefined;
+  const property = await getOne(
+    "SELECT * FROM properties WHERE id = $1",
+    [Number(id)]
+  ) as Property | null;
   if (!property) return null;
 
-  const images = db
-    .prepare(
-      "SELECT * FROM property_images WHERE property_id = ? ORDER BY is_cover DESC"
-    )
-    .all(Number(id)) as PropertyImage[];
+  const images = await getAll(
+    "SELECT * FROM property_images WHERE property_id = $1 ORDER BY is_cover DESC",
+    [Number(id)]
+  ) as PropertyImage[];
 
   return { ...property, images };
 }

@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { query, getOne } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const property = db
-      .prepare(
-        `SELECT p.*,
-          (SELECT json_group_array(json_object(
-            'id', pi.id,
-            'filename', pi.filename,
-            'original_name', pi.original_name,
-            'is_cover', pi.is_cover
-          )) FROM property_images pi WHERE pi.property_id = p.id) as images
-        FROM properties p
-        WHERE p.id = ?`
-      )
-      .get(params.id) as Record<string, unknown> | undefined;
+    const property = await getOne(
+      `SELECT p.*,
+        COALESCE((SELECT json_agg(json_build_object(
+          'id', pi.id,
+          'filename', pi.filename,
+          'original_name', pi.original_name,
+          'is_cover', pi.is_cover
+        )) FROM property_images pi WHERE pi.property_id = p.id), '[]'::json) as images
+      FROM properties p
+      WHERE p.id = $1`,
+      [params.id]
+    ) as Record<string, unknown> | null;
 
     if (!property) {
       return NextResponse.json(
@@ -33,7 +32,7 @@ export async function GET(
         ? JSON.parse(property.characteristics as string)
         : [],
       details: property.details ? JSON.parse(property.details as string) : {},
-      images: property.images ? JSON.parse(property.images as string) : [],
+      images: typeof property.images === 'string' ? JSON.parse(property.images as string) : (property.images || []),
     };
 
     return NextResponse.json(parsed);
@@ -51,9 +50,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const existing = db
-      .prepare('SELECT * FROM properties WHERE id = ?')
-      .get(params.id);
+    const existing = await getOne('SELECT * FROM properties WHERE id = $1', [params.id]);
 
     if (!existing) {
       return NextResponse.json(
@@ -80,45 +77,44 @@ export async function PUT(
       longitude,
     } = body;
 
-    db.prepare(
+    await query(
       `UPDATE properties SET
-        title = COALESCE(?, title),
-        description = COALESCE(?, description),
-        price = COALESCE(?, price),
-        area = COALESCE(?, area),
-        type = COALESCE(?, type),
-        address = COALESCE(?, address),
-        city = COALESCE(?, city),
-        state = COALESCE(?, state),
-        neighborhood = COALESCE(?, neighborhood),
-        status = COALESCE(?, status),
-        characteristics = COALESCE(?, characteristics),
-        details = COALESCE(?, details),
-        latitude = COALESCE(?, latitude),
-        longitude = COALESCE(?, longitude),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?`
-    ).run(
-      title || null,
-      description || null,
-      price || null,
-      area || null,
-      type || null,
-      address || null,
-      city || null,
-      state || null,
-      neighborhood || null,
-      status || null,
-      characteristics ? JSON.stringify(characteristics) : null,
-      details ? JSON.stringify(details) : null,
-      latitude !== undefined ? latitude : null,
-      longitude !== undefined ? longitude : null,
-      params.id
+        title = COALESCE($1, title),
+        description = COALESCE($2, description),
+        price = COALESCE($3, price),
+        area = COALESCE($4, area),
+        type = COALESCE($5, type),
+        address = COALESCE($6, address),
+        city = COALESCE($7, city),
+        state = COALESCE($8, state),
+        neighborhood = COALESCE($9, neighborhood),
+        status = COALESCE($10, status),
+        characteristics = COALESCE($11, characteristics),
+        details = COALESCE($12, details),
+        latitude = COALESCE($13, latitude),
+        longitude = COALESCE($14, longitude),
+        updated_at = NOW()
+      WHERE id = $15`,
+      [
+        title || null,
+        description || null,
+        price || null,
+        area || null,
+        type || null,
+        address || null,
+        city || null,
+        state || null,
+        neighborhood || null,
+        status || null,
+        characteristics ? JSON.stringify(characteristics) : null,
+        details ? JSON.stringify(details) : null,
+        latitude !== undefined ? latitude : null,
+        longitude !== undefined ? longitude : null,
+        params.id,
+      ]
     );
 
-    const updated = db
-      .prepare('SELECT * FROM properties WHERE id = ?')
-      .get(params.id);
+    const updated = await getOne('SELECT * FROM properties WHERE id = $1', [params.id]);
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -135,9 +131,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const existing = db
-      .prepare('SELECT * FROM properties WHERE id = ?')
-      .get(params.id);
+    const existing = await getOne('SELECT * FROM properties WHERE id = $1', [params.id]);
 
     if (!existing) {
       return NextResponse.json(
@@ -146,7 +140,7 @@ export async function DELETE(
       );
     }
 
-    db.prepare('DELETE FROM properties WHERE id = ?').run(params.id);
+    await query('DELETE FROM properties WHERE id = $1', [params.id]);
 
     return NextResponse.json({ message: 'Property deleted successfully' });
   } catch (error) {

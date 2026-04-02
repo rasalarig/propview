@@ -3,7 +3,7 @@ import { seed } from '@/lib/seed';
 
 export async function GET() {
   try {
-    const result = seed();
+    const result = await seed();
     return NextResponse.json(result);
   } catch (error) {
     console.error('Seed error:', error);

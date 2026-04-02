@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import db from '@/lib/db';
+import { getOne } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,23 +13,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'property_id is required' }, { status: 400 });
     }
 
-    const likesCount = db.prepare(
-      'SELECT COUNT(*) as count FROM favorites WHERE property_id = ?'
-    ).get(Number(propertyId)) as { count: number };
+    const likesCount = await getOne(
+      'SELECT COUNT(*) as count FROM favorites WHERE property_id = $1',
+      [Number(propertyId)]
+    ) as { count: string };
 
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     let favorited = false;
 
     if (user) {
-      const existing = db.prepare(
-        'SELECT id FROM favorites WHERE user_id = ? AND property_id = ?'
-      ).get(user.id, Number(propertyId)) as { id: number } | undefined;
+      const existing = await getOne(
+        'SELECT id FROM favorites WHERE user_id = $1 AND property_id = $2',
+        [user.id, Number(propertyId)]
+      ) as { id: number } | null;
       favorited = !!existing;
     }
 
     return NextResponse.json({
       favorited,
-      likes_count: likesCount.count,
+      likes_count: parseInt(likesCount.count, 10),
     });
   } catch (error) {
     console.error('Favorites check error:', error);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
+import { query, getOne } from "@/lib/db";
 
 export async function PUT(
   request: NextRequest,
@@ -14,8 +14,8 @@ export async function PUT(
       return NextResponse.json({ error: "Status invalido" }, { status: 400 });
     }
 
-    db.prepare("UPDATE leads SET status = ? WHERE id = ?").run(status, id);
-    const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(id);
+    await query("UPDATE leads SET status = $1 WHERE id = $2", [status, id]);
+    const lead = await getOne("SELECT * FROM leads WHERE id = $1", [id]);
 
     return NextResponse.json(lead);
   } catch (error) {
@@ -29,7 +29,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    db.prepare("DELETE FROM leads WHERE id = ?").run(Number(params.id));
+    await query("DELETE FROM leads WHERE id = $1", [Number(params.id)]);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting lead:", error);

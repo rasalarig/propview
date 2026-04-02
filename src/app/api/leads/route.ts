@@ -1,37 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
+import { getOne, getAll } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
     const propertyId = request.nextUrl.searchParams.get("property_id");
     const status = request.nextUrl.searchParams.get("status");
 
-    let query = `
+    let sql = `
       SELECT l.*, p.title as property_title, p.city as property_city
       FROM leads l
       JOIN properties p ON l.property_id = p.id
       WHERE 1=1
     `;
     const params: (string | number)[] = [];
+    let paramIndex = 1;
 
     if (propertyId) {
-      query += " AND l.property_id = ?";
+      sql += ` AND l.property_id = $${paramIndex++}`;
       params.push(Number(propertyId));
     }
     if (status) {
-      query += " AND l.status = ?";
+      sql += ` AND l.status = $${paramIndex++}`;
       params.push(status);
     }
 
-    query += " ORDER BY l.created_at DESC";
+    sql += " ORDER BY l.created_at DESC";
 
-    const leads = db.prepare(query).all(...params);
+    const leads = await getAll(sql, params);
+
+    const totalRow = await getOne("SELECT COUNT(*) as count FROM leads") as { count: string };
+    const novoRow = await getOne("SELECT COUNT(*) as count FROM leads WHERE status = 'novo'") as { count: string };
+    const contatadoRow = await getOne("SELECT COUNT(*) as count FROM leads WHERE status = 'contatado'") as { count: string };
+    const convertidoRow = await getOne("SELECT COUNT(*) as count FROM leads WHERE status = 'convertido'") as { count: string };
 
     const stats = {
-      total: (db.prepare("SELECT COUNT(*) as count FROM leads").get() as { count: number }).count,
-      novo: (db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'novo'").get() as { count: number }).count,
-      contatado: (db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'contatado'").get() as { count: number }).count,
-      convertido: (db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'convertido'").get() as { count: number }).count,
+      total: parseInt(totalRow.count, 10),
+      novo: parseInt(novoRow.count, 10),
+      contatado: parseInt(contatadoRow.count, 10),
+      convertido: parseInt(convertidoRow.count, 10),
     };
 
     return NextResponse.json({ leads, stats });
@@ -50,16 +56,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nome e telefone sao obrigatorios" }, { status: 400 });
     }
 
-    const property = db.prepare("SELECT id, title FROM properties WHERE id = ?").get(property_id);
+    const property = await getOne("SELECT id, title FROM properties WHERE id = $1", [property_id]);
     if (!property) {
       return NextResponse.json({ error: "Imovel nao encontrado" }, { status: 404 });
     }
 
-    const result = db.prepare(
-      "INSERT INTO leads (property_id, name, phone, email, message, source) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run(property_id, name, phone, email || null, message || null, source);
+    const result = await getOne(
+      "INSERT INTO leads (property_id, name, phone, email, message, source) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+      [property_id, name, phone, email || null, message || null, source]
+    );
 
-    return NextResponse.json({ id: result.lastInsertRowid, message: "Lead registrado com sucesso!" }, { status: 201 });
+    return NextResponse.json({ id: result.id, message: "Lead registrado com sucesso!" }, { status: 201 });
   } catch (error) {
     console.error("Error creating lead:", error);
     return NextResponse.json({ error: "Failed to create lead" }, { status: 500 });

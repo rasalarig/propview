@@ -2,6 +2,7 @@ import { AdminPropertyList } from "@/components/admin-property-list";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import Link from "next/link";
+import { getAll, getOne } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -23,17 +24,14 @@ interface Property {
 }
 
 async function getProperties() {
-  const { default: db } = await import("@/lib/db");
-  return db
-    .prepare(
-      "SELECT id, title, price, area, type, city, state, status, created_at FROM properties ORDER BY created_at DESC"
-    )
-    .all() as Property[];
+  return await getAll(
+    "SELECT id, title, price, area, type, city, state, status, created_at FROM properties ORDER BY created_at DESC"
+  ) as Property[];
 }
 
 async function getNewLeadsCount() {
-  const { default: db } = await import("@/lib/db");
-  return (db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'novo'").get() as { count: number }).count;
+  const row = await getOne("SELECT COUNT(*) as count FROM leads WHERE status = 'novo'") as { count: string };
+  return parseInt(row.count, 10);
 }
 
 export default async function AdminPage() {

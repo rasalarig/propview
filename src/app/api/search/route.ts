@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { openaiSearch, aiSearch, localSearch } from "@/lib/search";
 
 export async function GET(request: NextRequest) {
-  const query = request.nextUrl.searchParams.get("q");
+  const queryText = request.nextUrl.searchParams.get("q");
 
-  if (!query || query.trim().length === 0) {
+  if (!queryText || queryText.trim().length === 0) {
     return NextResponse.json({ results: [], query: "", mode: "empty" });
   }
 
@@ -16,13 +16,13 @@ export async function GET(request: NextRequest) {
     let mode: string;
 
     if (hasOpenAI) {
-      results = await openaiSearch(query);
+      results = await openaiSearch(queryText);
       mode = "openai";
     } else if (hasClaude) {
-      results = await aiSearch(query);
+      results = await aiSearch(queryText);
       mode = "claude";
     } else {
-      results = localSearch(query);
+      results = await localSearch(queryText);
       mode = "local";
     }
 
@@ -34,14 +34,14 @@ export async function GET(request: NextRequest) {
         score: r.score,
         matchReasons: r.matchReasons,
       })),
-      query,
+      query: queryText,
       mode,
       total: results.length,
     });
   } catch (error) {
     console.error("Search error:", error);
     return NextResponse.json(
-      { results: [], query, mode: "error", error: "Search failed" },
+      { results: [], query: queryText, mode: "error", error: "Search failed" },
       { status: 500 }
     );
   }

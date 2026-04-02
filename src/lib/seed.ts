@@ -1,4 +1,4 @@
-import db from './db';
+import { query, getOne } from './db';
 
 const sampleProperties = [
   {
@@ -77,25 +77,35 @@ const sampleProperties = [
   },
 ];
 
-export function seed() {
-  const count = db.prepare('SELECT COUNT(*) as count FROM properties').get() as { count: number };
+export async function seed() {
+  const countRow = await getOne('SELECT COUNT(*) as count FROM properties') as { count: string };
+  const count = parseInt(countRow.count, 10);
 
-  if (count.count > 0) {
-    return { message: 'Database already seeded', count: count.count };
+  if (count > 0) {
+    return { message: 'Database already seeded', count };
   }
 
-  const insert = db.prepare(`
-    INSERT INTO properties (title, description, price, area, type, address, city, state, neighborhood, characteristics, details, latitude, longitude)
-    VALUES (@title, @description, @price, @area, @type, @address, @city, @state, @neighborhood, @characteristics, @details, @latitude, @longitude)
-  `);
-
-  const insertMany = db.transaction((properties: typeof sampleProperties) => {
-    for (const property of properties) {
-      insert.run(property);
-    }
-  });
-
-  insertMany(sampleProperties);
+  for (const property of sampleProperties) {
+    await query(
+      `INSERT INTO properties (title, description, price, area, type, address, city, state, neighborhood, characteristics, details, latitude, longitude)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      [
+        property.title,
+        property.description,
+        property.price,
+        property.area,
+        property.type,
+        property.address,
+        property.city,
+        property.state,
+        property.neighborhood,
+        property.characteristics,
+        property.details,
+        property.latitude,
+        property.longitude,
+      ]
+    );
+  }
 
   return { message: 'Database seeded successfully', count: sampleProperties.length };
 }

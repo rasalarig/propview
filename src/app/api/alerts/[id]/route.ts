@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import db from "@/lib/db";
+import { query, getOne, getAll } from "@/lib/db";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -18,33 +18,31 @@ export async function GET(
     }
 
     // Check ownership
-    const alert = db
-      .prepare("SELECT * FROM search_alerts WHERE id = ? AND user_id = ?")
-      .get(alertId, user.id) as Record<string, unknown> | undefined;
+    const alert = await getOne(
+      "SELECT * FROM search_alerts WHERE id = $1 AND user_id = $2",
+      [alertId, user.id]
+    ) as Record<string, unknown> | null;
 
     if (!alert) {
       return NextResponse.json({ error: "Alert not found" }, { status: 404 });
     }
 
     // Get matches with property data
-    const matches = db
-      .prepare(
-        `SELECT am.*, p.title, p.description, p.price, p.area, p.type,
-          p.address, p.city, p.state, p.neighborhood, p.characteristics,
-          p.details, p.status as property_status,
-          (SELECT pi.filename FROM property_images pi WHERE pi.property_id = p.id AND pi.is_cover = 1 LIMIT 1) as cover_image,
-          (SELECT pi.filename FROM property_images pi WHERE pi.property_id = p.id LIMIT 1) as first_image
-        FROM alert_matches am
-        JOIN properties p ON am.property_id = p.id
-        WHERE am.alert_id = ?
-        ORDER BY am.score DESC`
-      )
-      .all(alertId);
+    const matches = await getAll(
+      `SELECT am.*, p.title, p.description, p.price, p.area, p.type,
+        p.address, p.city, p.state, p.neighborhood, p.characteristics,
+        p.details, p.status as property_status,
+        (SELECT pi.filename FROM property_images pi WHERE pi.property_id = p.id AND pi.is_cover = 1 LIMIT 1) as cover_image,
+        (SELECT pi.filename FROM property_images pi WHERE pi.property_id = p.id LIMIT 1) as first_image
+      FROM alert_matches am
+      JOIN properties p ON am.property_id = p.id
+      WHERE am.alert_id = $1
+      ORDER BY am.score DESC`,
+      [alertId]
+    );
 
     // Mark all matches as seen
-    db.prepare("UPDATE alert_matches SET seen = 1 WHERE alert_id = ?").run(
-      alertId
-    );
+    await query("UPDATE alert_matches SET seen = 1 WHERE alert_id = $1", [alertId]);
 
     return NextResponse.json({
       alert,
@@ -72,7 +70,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -83,9 +81,10 @@ export async function PUT(
     }
 
     // Check ownership
-    const alert = db
-      .prepare("SELECT * FROM search_alerts WHERE id = ? AND user_id = ?")
-      .get(alertId, user.id);
+    const alert = await getOne(
+      "SELECT * FROM search_alerts WHERE id = $1 AND user_id = $2",
+      [alertId, user.id]
+    );
 
     if (!alert) {
       return NextResponse.json({ error: "Alert not found" }, { status: 404 });
@@ -101,14 +100,15 @@ export async function PUT(
       );
     }
 
-    db.prepare("UPDATE search_alerts SET is_active = ? WHERE id = ?").run(
+    await query("UPDATE search_alerts SET is_active = $1 WHERE id = $2", [
       is_active ? 1 : 0,
-      alertId
-    );
+      alertId,
+    ]);
 
-    const updated = db
-      .prepare("SELECT * FROM search_alerts WHERE id = ?")
-      .get(alertId);
+    const updated = await getOne(
+      "SELECT * FROM search_alerts WHERE id = $1",
+      [alertId]
+    );
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -125,7 +125,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -136,15 +136,16 @@ export async function DELETE(
     }
 
     // Check ownership
-    const alert = db
-      .prepare("SELECT * FROM search_alerts WHERE id = ? AND user_id = ?")
-      .get(alertId, user.id);
+    const alert = await getOne(
+      "SELECT * FROM search_alerts WHERE id = $1 AND user_id = $2",
+      [alertId, user.id]
+    );
 
     if (!alert) {
       return NextResponse.json({ error: "Alert not found" }, { status: 404 });
     }
 
-    db.prepare("DELETE FROM search_alerts WHERE id = ?").run(alertId);
+    await query("DELETE FROM search_alerts WHERE id = $1", [alertId]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

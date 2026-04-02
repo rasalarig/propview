@@ -1,39 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import db from '@/lib/db';
+import { query, getOne, getAll } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const favorites = db.prepare(`
+    const favorites = await getAll(`
       SELECT p.*, f.created_at as favorited_at,
         (SELECT COUNT(*) FROM favorites WHERE property_id = p.id) as likes_count
       FROM favorites f
       JOIN properties p ON f.property_id = p.id
-      WHERE f.user_id = ?
+      WHERE f.user_id = $1
       ORDER BY f.created_at DESC
-    `).all(user.id) as Array<Record<string, unknown>>;
+    `, [user.id]) as Array<Record<string, unknown>>;
 
     // Attach images to each property
-    const favoritesWithImages = favorites.map((prop) => {
-      const images = db.prepare(
-        'SELECT id, filename, original_name, is_cover FROM property_images WHERE property_id = ? ORDER BY is_cover DESC'
-      ).all(prop.id) as Array<{ id: number; filename: string; original_name: string; is_cover: number }>;
+    const favoritesWithImages = [];
+    for (const prop of favorites) {
+      const images = await getAll(
+        'SELECT id, filename, original_name, is_cover FROM property_images WHERE property_id = $1 ORDER BY is_cover DESC',
+        [prop.id]
+      ) as Array<{ id: number; filename: string; original_name: string; is_cover: number }>;
 
       const coverImage = images.find(img => img.is_cover) || images[0];
 
-      return {
+      favoritesWithImages.push({
         ...prop,
         images,
         coverImage: coverImage?.filename || null,
-      };
-    });
+      });
+    }
 
     return NextResponse.json({ favorites: favoritesWithImages });
   } catch (error) {
@@ -44,7 +46,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -55,27 +57,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already favorited
-    const existing = db.prepare(
-      'SELECT id FROM favorites WHERE user_id = ? AND property_id = ?'
-    ).get(user.id, property_id) as { id: number } | undefined;
+    const existing = await getOne(
+      'SELECT id FROM favorites WHERE user_id = $1 AND property_id = $2',
+      [user.id, property_id]
+    ) as { id: number } | null;
 
     if (existing) {
       // Unfavorite
-      db.prepare('DELETE FROM favorites WHERE id = ?').run(existing.id);
+      await query('DELETE FROM favorites WHERE id = $1', [existing.id]);
     } else {
       // Favorite
-      db.prepare(
-        'INSERT INTO favorites (user_id, property_id) VALUES (?, ?)'
-      ).run(user.id, property_id);
+      await query(
+        'INSERT INTO favorites (user_id, property_id) VALUES ($1, $2)',
+        [user.id, property_id]
+      );
     }
 
-    const likesCount = db.prepare(
-      'SELECT COUNT(*) as count FROM favorites WHERE property_id = ?'
-    ).get(property_id) as { count: number };
+    const likesCount = await getOne(
+      'SELECT COUNT(*) as count FROM favorites WHERE property_id = $1',
+      [property_id]
+    ) as { count: string };
 
     return NextResponse.json({
       favorited: !existing,
-      likes_count: likesCount.count,
+      likes_count: parseInt(likesCount.count, 10),
     });
   } catch (error) {
     console.error('Favorites POST error:', error);
