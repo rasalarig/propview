@@ -1,6 +1,6 @@
 import { AdminPropertyList } from "@/components/admin-property-list";
 import { Button } from "@/components/ui/button";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { getAll, getOne } from "@/lib/db";
 
@@ -58,6 +58,12 @@ export default async function AdminPage() {
                     {newLeadsCount}
                   </span>
                 )}
+              </Button>
+            </Link>
+            <Link href="/campanhas">
+              <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
+                <Megaphone className="w-4 h-4 mr-2" />
+                Campanhas
               </Button>
             </Link>
             <Link href="/admin/cadastro">

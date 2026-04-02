@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   Flame, Snowflake, Sun, CheckCircle, Users, Eye, Heart, Share2,
-  MousePointer, MessageSquare, Loader2, ExternalLink, TrendingUp,
+  MousePointer, MessageSquare, Loader2, ExternalLink, TrendingUp, Megaphone,
 } from "lucide-react";
 
 interface LeadInteractions {
@@ -45,6 +45,7 @@ interface Stats {
   convertido: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const tempConfig: Record<string, { icon: any; label: string; color: string; bg: string; border: string }> = {
   frio: { icon: Snowflake, label: "Frio", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
   morno: { icon: Sun, label: "Morno", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
@@ -114,9 +115,17 @@ export function LeadsThermometer() {
             {stats.total} leads baseados em engajamento
           </p>
         </div>
-        <Link href="/admin">
-          <Button variant="outline" size="sm">Voltar ao Painel</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/campanhas">
+            <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
+              <Megaphone className="w-4 h-4 mr-1" />
+              Criar Campanha
+            </Button>
+          </Link>
+          <Link href="/admin">
+            <Button variant="outline" size="sm">Voltar ao Painel</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -130,7 +139,7 @@ export function LeadsThermometer() {
             <Card
               key={temp}
               className={`p-4 ${config.bg} ${config.border} border text-center cursor-pointer transition-all ${isActive ? "ring-2 ring-offset-2 ring-offset-background" : "hover:scale-105"}`}
-              style={isActive ? { ringColor: "currentColor" } : {}}
+              style={isActive ? { ["--tw-ring-color" as string]: "currentColor" } as React.CSSProperties : {}}
               onClick={() => setFilter(isActive ? null : temp)}
             >
               <Icon className={`w-5 h-5 ${config.color} mx-auto mb-1`} />
