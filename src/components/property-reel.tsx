@@ -121,7 +121,7 @@ export function PropertyReel({
     <div
       ref={reelRef}
       className="reel-item relative w-full overflow-hidden bg-black"
-      style={{ height: "calc(100vh - 4rem)" }}
+      style={{ height: "100dvh" }}
     >
       {/* Background Images with Crossfade */}
       {imageUrls.length > 0 ? (

@@ -3,11 +3,19 @@ import Image from "next/image";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-background/50">
+    <footer className="hidden md:block border-t border-border/40 bg-background/50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center">
-            <Image src="/logo.png" alt="PropView" width={72} height={24} className="h-6 w-auto" />
+            <div className="h-8 w-32 overflow-hidden relative">
+              <Image
+                src="/logo_novo.png"
+                alt="PropView"
+                width={1536}
+                height={1024}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-auto"
+              />
+            </div>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/imoveis" className="hover:text-foreground transition-colors">Imóveis</Link>

@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Menu, X, Users, LogIn, LogOut, Heart, Bell, Film } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
-import Image from "next/image";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -56,10 +56,19 @@ export function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+    <header className="hidden md:block fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center group">
-          <Image src="/logo.png" alt="PropView" width={96} height={32} className="h-8 w-auto" priority />
+          <div className="h-12 w-48 overflow-hidden relative">
+            <Image
+              src="/logo_novo.png"
+              alt="PropView"
+              width={1536}
+              height={1024}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-auto"
+              priority
+            />
+          </div>
         </Link>
 
         {/* Desktop Nav */}

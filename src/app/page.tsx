@@ -1,15 +1,11 @@
-import { SearchHero } from "@/components/search-hero";
-import { FeaturedProperties } from "@/components/featured-properties";
-import { HowItWorks } from "@/components/how-it-works";
+import { ReelsFeed } from "@/components/reels-feed";
 
 export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
-    <>
-      <SearchHero />
-      <FeaturedProperties />
-      <HowItWorks />
-    </>
+    <div className="bg-black">
+      <ReelsFeed />
+    </div>
   );
 }

@@ -50,7 +50,7 @@ export function ReelsFeed() {
     return (
       <div
         className="flex items-center justify-center bg-black"
-        style={{ height: "calc(100vh - 4rem)" }}
+        style={{ height: "100dvh" }}
       >
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
@@ -64,7 +64,7 @@ export function ReelsFeed() {
     return (
       <div
         className="flex items-center justify-center bg-black"
-        style={{ height: "calc(100vh - 4rem)" }}
+        style={{ height: "100dvh" }}
       >
         <p className="text-red-400 text-sm">{error}</p>
       </div>
@@ -75,7 +75,7 @@ export function ReelsFeed() {
     return (
       <div
         className="flex items-center justify-center bg-black"
-        style={{ height: "calc(100vh - 4rem)" }}
+        style={{ height: "100dvh" }}
       >
         <div className="text-center">
           <p className="text-white/60 text-lg mb-2">
@@ -93,7 +93,7 @@ export function ReelsFeed() {
     <div
       className="reels-container overflow-y-scroll bg-black"
       style={{
-        height: "calc(100vh - 4rem)",
+        height: "100dvh",
         scrollSnapType: "y mandatory",
         scrollBehavior: "smooth",
       }}
@@ -102,7 +102,7 @@ export function ReelsFeed() {
         <div
           key={property.id}
           style={{
-            height: "calc(100vh - 4rem)",
+            height: "100dvh",
             scrollSnapAlign: "start",
           }}
         >
