@@ -1,60 +1,26 @@
 import { Pool } from 'pg';
-import { resolve4 } from 'dns/promises';
 
-let pool: Pool | null = null;
-
-async function getPool(): Promise<Pool> {
-  if (pool) return pool;
-
-  const connectionString = process.env.DATABASE_URL || '';
-
-  // Extract host from connection string to resolve IPv4
-  const hostMatch = connectionString.match(/@([^:\/]+)/);
-
-  if (hostMatch) {
-    try {
-      const addresses = await resolve4(hostMatch[1]);
-      if (addresses.length > 0) {
-        // Replace hostname with IPv4 address to avoid IPv6 issues on Render
-        const ipv4Url = connectionString.replace(hostMatch[1], addresses[0]);
-        pool = new Pool({
-          connectionString: ipv4Url,
-          ssl: { rejectUnauthorized: false },
-        });
-        return pool;
-      }
-    } catch {
-      // Fall through to default connection
-    }
-  }
-
-  pool = new Pool({
-    connectionString,
-    ssl: { rejectUnauthorized: false },
-  });
-  return pool;
-}
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
 export async function query(text: string, params?: unknown[]) {
-  const p = await getPool();
-  return p.query(text, params);
+  return pool.query(text, params);
 }
 
 export async function getOne(text: string, params?: unknown[]) {
-  const p = await getPool();
-  const result = await p.query(text, params);
+  const result = await pool.query(text, params);
   return result.rows[0] || null;
 }
 
 export async function getAll(text: string, params?: unknown[]) {
-  const p = await getPool();
-  const result = await p.query(text, params);
+  const result = await pool.query(text, params);
   return result.rows;
 }
 
 export async function initDB() {
-  const p = await getPool();
-  await p.query(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS properties (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,

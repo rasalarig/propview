@@ -4,8 +4,8 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install --include=dev && NODE_OPTIONS="--dns-result-order=ipv4first" npm run build && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static
-    startCommand: node .next/standalone/server.js
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -19,5 +19,3 @@ services:
         value: production
       - key: PORT
         value: "10000"
-      - key: NODE_OPTIONS
-        value: "--dns-result-order=ipv4first"
