@@ -237,17 +237,16 @@ export async function openaiSearch(queryText: string): Promise<SearchResult[]> {
       messages: [
         {
           role: "system",
-          content: `Voce e um assistente especialista em busca imobiliaria. Sua funcao e analisar imoveis disponiveis e determinar quais combinam com o que o usuario esta procurando.
+          content: `Voce e um assistente de busca imobiliaria. Analise os imoveis disponiveis e determine quais combinam com o pedido do usuario.
 
 REGRAS:
-- Analise TODOS os campos: titulo, descricao, caracteristicas, localizacao, preco, area, detalhes
-- Seja generoso: se ha qualquer relacao entre a busca e o imovel, inclua-o
-- Para cada resultado, explique de forma clara e amigavel POR QUE combina
-- Entenda contexto implicito: "lugar tranquilo pra familia" = residencial, seguro, tranquilo
-- Entenda buscas por investimento: "bom investimento" = preco acessivel, area grande, documentacao ok
-- Sempre responda em portugues brasileiro
+1. EXCLUSOES EXPLICITAS: se o usuario disse "fora de condominio", "sem piscina", "nao quero X" — EXCLUA imoveis que tenham essa caracteristica. So exclua o que o usuario EXPLICITAMENTE pediu para excluir.
+2. CRITERIOS POSITIVOS: "casa" = tipo casa, "terrea" = caracteristica terrea, "3 quartos" = bedrooms 3, etc. Inclua imoveis que atendem os criterios positivos.
+3. NAO invente exclusoes que o usuario nao pediu. Se ele disse "casa fora de condominio", inclua casas com piscina, com garagem, etc — so exclua condominio.
+4. Se um imovel atende os criterios positivos e nao viola nenhuma exclusao, INCLUA com score proporcional.
+5. Responda em portugues brasileiro.
 
-Retorne APENAS JSON no formato: { "results": [{ "id": number, "score": 0-100, "reasons": ["razao 1", "razao 2"] }] }
+Retorne APENAS JSON: { "results": [{ "id": number, "score": 0-100, "reasons": ["razao 1", "razao 2"] }] }
 Se nenhum imovel combinar, retorne { "results": [] }.`,
         },
         {
@@ -326,20 +325,21 @@ export async function aiSearch(queryText: string): Promise<SearchResult[]> {
       messages: [
         {
           role: "user",
-          content: `Voce e um assistente de busca imobiliaria. O usuario esta procurando um imovel com a seguinte descricao:
+          content: `Voce e um assistente de busca imobiliaria PRECISO e ASSERTIVO. O usuario busca:
 
 "${queryText}"
 
-Aqui estao os imoveis disponiveis:
+REGRAS OBRIGATORIAS:
+1. EXCLUSOES sao absolutas. "fora de condominio" = EXCLUIR qualquer imovel em condominio. "sem piscina" = EXCLUIR imoveis com piscina. Imoveis que violam exclusoes NAO aparecem nos resultados.
+2. Retorne SOMENTE imoveis que atendem TODOS os criterios positivos E nao violam NENHUM criterio negativo.
+3. Prefira PRECISAO a QUANTIDADE. Se so 1 imovel combina, retorne so 1. Se nenhum combina, retorne array vazio.
+4. Score alto (80-100) = atende todos os criterios. NAO inclua imoveis com score abaixo de 50.
+
+Imoveis disponiveis:
 ${JSON.stringify(propertySummaries, null, 2)}
 
-Para cada imovel que combina com a busca do usuario, retorne um JSON array com objetos contendo:
-- "id": o ID do imovel
-- "score": nota de 0 a 100 de relevancia
-- "reasons": array de strings explicando POR QUE esse imovel combina com a busca (em portugues, de forma clara e amigavel)
-
-Retorne APENAS o JSON array, sem markdown ou explicacoes extras. Se nenhum imovel combinar, retorne [].
-Seja generoso na busca — se ha alguma relacao entre a busca e o imovel, inclua-o com score apropriado.`,
+Retorne APENAS um JSON array: [{ "id": number, "score": 0-100, "reasons": ["razao 1"] }]
+Se nenhum combinar, retorne [].`,
         },
       ],
     });
