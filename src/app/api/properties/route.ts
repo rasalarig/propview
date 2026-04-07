@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       details,
       latitude,
       longitude,
+      seller_id,
     } = body;
 
     if (!title || !description || !price || !area || !type || !address || !city) {
@@ -62,8 +63,8 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await getOne(
-      `INSERT INTO properties (title, description, price, area, type, address, city, state, neighborhood, characteristics, details, latitude, longitude)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      `INSERT INTO properties (title, description, price, area, type, address, city, state, neighborhood, characteristics, details, latitude, longitude, seller_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING id`,
       [
         title,
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
         details ? JSON.stringify(details) : null,
         latitude || null,
         longitude || null,
+        seller_id || null,
       ]
     );
 
