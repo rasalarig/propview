@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Film, Search, Heart, Home, User, MessageCircle } from "lucide-react";
+import { Film, Search, Heart, Home, User, MessageCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const publicTabs = [
   { href: "/", icon: Film, label: "Reels" },
@@ -18,12 +18,15 @@ const authedTabs = [
   { href: "/mensagens", icon: MessageCircle, label: "Mensagens" },
   { href: "/vender/meus-imoveis", icon: Home, label: "Meus Imoveis" },
   { href: "/favoritos", icon: Heart, label: "Favoritos" },
+  { href: "#profile", icon: User, label: "Perfil" },
 ];
 
 export function BottomTabBar() {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+  const [showProfile, setShowProfile] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) {
@@ -46,14 +49,72 @@ export function BottomTabBar() {
     return () => clearInterval(interval);
   }, [user]);
 
+  // Close profile popup when clicking outside
+  useEffect(() => {
+    if (!showProfile) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfile(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showProfile]);
+
   const tabs = !loading && user ? authedTabs : publicTabs;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/40 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/40 safe-area-bottom relative">
+      {showProfile && user && (
+        <div
+          ref={profileRef}
+          className="absolute bottom-full left-0 right-0 mb-0 p-4 bg-card/95 backdrop-blur-xl border-t border-border/40 animate-in slide-in-from-bottom-2"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            {user.avatar_url ? (
+              <img src={user.avatar_url} alt={user.name} className="w-10 h-10 rounded-full" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-medium">
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="font-medium text-sm text-foreground">{user.name}</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              await logout();
+              setShowProfile(false);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-around h-16 px-2">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href || (tab.href !== "/" && pathname.startsWith(tab.href));
           const Icon = tab.icon;
+
+          if (tab.href === "#profile") {
+            return (
+              <button
+                key="profile"
+                onClick={() => setShowProfile(!showProfile)}
+                className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 transition-colors ${
+                  showProfile ? "text-emerald-500" : "text-muted-foreground"
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${showProfile ? "text-emerald-500" : ""}`} />
+                <span className="text-[10px] font-medium">{tab.label}</span>
+              </button>
+            );
+          }
+
+          const isActive = pathname === tab.href || (tab.href !== "/" && pathname.startsWith(tab.href));
           return (
             <Link
               key={tab.href}
