@@ -273,9 +273,9 @@ export function PropertyReel({
       {/* Dark gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30 z-10" />
 
-      {/* Dot indicators - bottom of image area */}
+      {/* Dot indicators - top area to avoid overlapping content */}
       {hasMultipleImages && (
-        <div className="absolute bottom-[180px] left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
           {imageUrls.map((_, index) => (
             <button
               key={index}
