@@ -5,12 +5,13 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const error = request.nextUrl.searchParams.get('error');
 
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
+
   if (error || !code) {
-    return NextResponse.redirect(new URL('/login?error=google_denied', request.url));
+    return NextResponse.redirect(`${baseUrl}/login?error=google_denied`);
   }
 
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
     const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
     // Exchange code for tokens
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       console.error('Token exchange failed:', await tokenRes.text());
-      return NextResponse.redirect(new URL('/login?error=token_failed', request.url));
+      return NextResponse.redirect(`${baseUrl}/login?error=token_failed`);
     }
 
     const tokens = await tokenRes.json();
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!userInfoRes.ok) {
-      return NextResponse.redirect(new URL('/login?error=userinfo_failed', request.url));
+      return NextResponse.redirect(`${baseUrl}/login?error=userinfo_failed`);
     }
 
     const googleUser = await userInfoRes.json();
@@ -55,9 +56,9 @@ export async function GET(request: NextRequest) {
     const sessionId = await createSession(user.id);
     setSessionCookie(sessionId);
 
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(`${baseUrl}/`);
   } catch (err) {
     console.error('Google OAuth error:', err);
-    return NextResponse.redirect(new URL('/login?error=server_error', request.url));
+    return NextResponse.redirect(`${baseUrl}/login?error=server_error`);
   }
 }
