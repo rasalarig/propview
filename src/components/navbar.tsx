@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle } from "lucide-react";
+import { Search, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle, Users } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 
@@ -130,6 +130,10 @@ export function Navbar() {
                 <Home className="w-3.5 h-3.5" />
                 Meus Imoveis
               </Link>
+              <Link href="/vender/leads" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                <Users className="w-3.5 h-3.5" />
+                Leads
+              </Link>
               <Link href="/vender/imovel">
                 <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white">
                   <Plus className="w-3.5 h-3.5 mr-1" />
@@ -185,6 +189,13 @@ export function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                       >
                         Meus Imoveis
+                      </Link>
+                      <Link
+                        href="/vender/leads"
+                        className="block px-3 py-2 text-sm text-muted-foreground hover:bg-accent/50 transition-colors"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        Leads
                       </Link>
                       <button
                         onClick={handleLogout}
@@ -249,6 +260,9 @@ export function Navbar() {
                 <div className="border-t border-border/40 my-1" />
                 <Link href="/vender/meus-imoveis" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
                   <Home className="w-3.5 h-3.5" /> Meus Imoveis
+                </Link>
+                <Link href="/vender/leads" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Users className="w-3.5 h-3.5" /> Leads
                 </Link>
                 <Link href="/vender/imovel" className="text-sm py-2 flex items-center gap-2 text-emerald-500 font-medium" onClick={() => setMobileOpen(false)}>
                   <Plus className="w-3.5 h-3.5" /> Cadastrar Imovel

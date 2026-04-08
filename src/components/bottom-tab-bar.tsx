@@ -15,7 +15,6 @@ const publicTabs = [
 const authedTabs = [
   { href: "/", icon: Film, label: "Reels" },
   { href: "/busca", icon: Search, label: "Busca IA" },
-  { href: "/mensagens", icon: MessageCircle, label: "Mensagens" },
   { href: "/vender/meus-imoveis", icon: Home, label: "Meus Imoveis" },
   { href: "/favoritos", icon: Heart, label: "Favoritos" },
   { href: "#profile", icon: User, label: "Perfil" },
@@ -84,6 +83,19 @@ export function BottomTabBar() {
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
             </div>
+            <Link
+              href="/mensagens"
+              onClick={() => setShowProfile(false)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors text-sm font-medium mb-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Mensagens
+              {unreadMsgCount > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                  {unreadMsgCount > 99 ? "99" : unreadMsgCount}
+                </span>
+              )}
+            </Link>
             <button
               onClick={async () => {
                 await logout();
@@ -111,7 +123,14 @@ export function BottomTabBar() {
                   showProfile ? "text-emerald-500" : "text-muted-foreground"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${showProfile ? "text-emerald-500" : ""}`} />
+                <span className="relative">
+                  <Icon className={`w-5 h-5 ${showProfile ? "text-emerald-500" : ""}`} />
+                  {unreadMsgCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none">
+                      {unreadMsgCount > 99 ? "99" : unreadMsgCount}
+                    </span>
+                  )}
+                </span>
                 <span className="text-[10px] font-medium">{tab.label}</span>
               </button>
             );
@@ -126,14 +145,7 @@ export function BottomTabBar() {
                 isActive ? "text-emerald-500" : "text-muted-foreground"
               }`}
             >
-              <span className="relative">
-                <Icon className={`w-5 h-5 ${isActive ? "text-emerald-500" : ""}`} />
-                {tab.href === "/mensagens" && unreadMsgCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold leading-none">
-                    {unreadMsgCount > 99 ? "99" : unreadMsgCount}
-                  </span>
-                )}
-              </span>
+              <Icon className={`w-5 h-5 ${isActive ? "text-emerald-500" : ""}`} />
               <span className="text-[10px] font-medium">{tab.label}</span>
             </Link>
           );
