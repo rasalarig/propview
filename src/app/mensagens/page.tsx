@@ -451,7 +451,7 @@ function MensagensContent() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Digite sua mensagem..."
-                    className="flex-1 bg-card border border-border/40 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
+                    className="flex-1 bg-card border border-border/40 rounded-full px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
                     disabled={sending}
                   />
                   <button

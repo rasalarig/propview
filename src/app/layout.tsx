@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
@@ -15,6 +15,13 @@ const geistSans = localFont({
 export const metadata: Metadata = {
   title: "PropView | Busca Inteligente de Imóveis",
   description: "Encontre o imóvel dos seus sonhos usando inteligência artificial. Busque por qualquer característica: terrenos com árvores, casas com vista, e muito mais.",
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

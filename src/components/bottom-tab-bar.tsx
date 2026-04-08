@@ -66,7 +66,7 @@ export function BottomTabBar() {
   return (
     <>
       {showProfile && user && (
-        <div className="fixed bottom-16 left-0 right-0 z-50 md:hidden">
+        <div className="fixed bottom-16 left-0 right-0 z-50 md:hidden touch-none">
           <div
             ref={profileRef}
             className="p-4 bg-card/95 backdrop-blur-xl border-t border-border/40"
@@ -97,7 +97,7 @@ export function BottomTabBar() {
           </div>
         </div>
       )}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/40 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-border/40 safe-area-bottom touch-none">
       <div className="flex items-center justify-around h-16 px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
