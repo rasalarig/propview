@@ -781,9 +781,15 @@ export default function CadastrarImovelPage() {
                     <Video className="w-8 h-8 text-emerald-500/60" />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Arraste fotos e videos aqui ou{" "}
-                    <span className="text-emerald-400 font-medium">
-                      clique para selecionar
+                    <span className="hidden md:inline">Arraste fotos e videos aqui ou{" "}
+                      <span className="text-emerald-400 font-medium">
+                        clique para selecionar
+                      </span>
+                    </span>
+                    <span className="md:hidden">
+                      <span className="text-emerald-400 font-medium">
+                        Toque para selecionar fotos e videos da galeria
+                      </span>
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground/60 mt-1">
@@ -831,8 +837,8 @@ export default function CadastrarImovelPage() {
                           </span>
                         )}
 
-                        {/* Hover overlay with actions */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        {/* Hover overlay with actions - always visible on mobile */}
+                        <div className="absolute inset-0 bg-black/30 md:bg-black/50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -870,8 +876,9 @@ export default function CadastrarImovelPage() {
 
                 {mediaEntries.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {mediaEntries.length} arquivo(s) selecionado(s).
-                    Passe o mouse sobre uma imagem para definir como capa ou remover.
+                    {mediaEntries.length} arquivo(s) selecionado(s).{" "}
+                    <span className="hidden md:inline">Passe o mouse sobre uma imagem para definir como capa ou remover.</span>
+                    <span className="md:hidden">Toque nos botoes sobre a imagem para definir capa ou remover.</span>
                   </p>
                 )}
               </div>

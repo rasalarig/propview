@@ -57,12 +57,12 @@ export function Navbar() {
 
   return (
     <header className="hidden md:block fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+      <div className="container mx-auto px-4 h-28 flex items-center justify-between">
         <Link href="/" className="flex items-center group flex-shrink-0">
           <img
             src="/logo_novo.png"
             alt="PropView"
-            className="h-16 w-auto"
+            className="h-48 w-auto"
           />
         </Link>
 
