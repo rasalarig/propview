@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Share2, Eye, Maximize } from "lucide-react";
+import { MapPin, Share2, Eye, Maximize, ChevronLeft, ChevronRight } from "lucide-react";
 import { LikeButton } from "@/components/like-button";
 import { useEngagement } from "@/hooks/use-engagement";
 import { isVideoUrl, resolveMediaUrl } from "@/lib/media-utils";
@@ -57,10 +57,14 @@ export function PropertyReel({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const reelRef = useRef<HTMLDivElement>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const { trackEvent } = useEngagement(id);
   const halfTrackedRef = useRef(false);
   const completeTrackedRef = useRef(false);
+
+  // Touch swipe refs
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   const mediaUrls = images
     .filter((img) => img.filename)
@@ -69,6 +73,50 @@ export function PropertyReel({
   const imageUrls = mediaUrls;
 
   const hasMultipleImages = imageUrls.length > 1;
+
+  // Navigation handlers
+  const goToNext = useCallback(() => {
+    setCurrentImageIndex((prev) => Math.min(prev + 1, imageUrls.length - 1));
+  }, [imageUrls.length]);
+
+  const goToPrev = useCallback(() => {
+    setCurrentImageIndex((prev) => Math.max(prev - 1, 0));
+  }, []);
+
+  // Touch swipe handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        // Swipe left - next
+        setCurrentImageIndex((prev) => Math.min(prev + 1, imageUrls.length - 1));
+      } else {
+        // Swipe right - previous
+        setCurrentImageIndex((prev) => Math.max(prev - 1, 0));
+      }
+    }
+  }, [imageUrls.length]);
+
+  // Video play/pause when navigating slides
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (!video) return;
+      if (index === currentImageIndex && isVisible) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, [currentImageIndex, isVisible]);
 
   // IntersectionObserver to detect visibility
   useEffect(() => {
@@ -85,22 +133,6 @@ export function PropertyReel({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-
-  // Auto-slideshow every 4 seconds when visible
-  useEffect(() => {
-    if (isVisible && hasMultipleImages) {
-      intervalRef.current = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length);
-      }, 4000);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isVisible, hasMultipleImages, imageUrls.length]);
 
   // Engagement view tracking
   useEffect(() => {
@@ -146,21 +178,27 @@ export function PropertyReel({
   }, [title, price, id, trackEvent]);
 
   const whatsappMessage = encodeURIComponent(
-    `Olá! Tenho interesse no imóvel: ${title} - ${formatPrice(price)}. Link: ${typeof window !== "undefined" ? window.location.origin : ""}/imoveis/${id}`
+    `Ol\u00e1! Tenho interesse no im\u00f3vel: ${title} - ${formatPrice(price)}. Link: ${typeof window !== "undefined" ? window.location.origin : ""}/imoveis/${id}`
   );
 
   return (
     <div
       ref={reelRef}
-      className="reel-item relative w-full h-full overflow-hidden bg-black"
+      className="reel-item group relative w-full h-full overflow-hidden bg-black"
     >
       {/* Background Images with Crossfade */}
       {imageUrls.length > 0 ? (
-        <div className="absolute inset-0">
+        <div
+          className="absolute inset-0"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {imageUrls.map((url, index) =>
             isVideoUrl(url) ? (
               <video
                 key={url}
+                ref={(el) => { videoRefs.current[index] = el; }}
                 src={url}
                 className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
                 style={{ opacity: index === currentImageIndex ? 1 : 0 }}
@@ -191,20 +229,49 @@ export function PropertyReel({
       {/* Dark gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30 z-10" />
 
-      {/* Image indicators */}
+      {/* Counter text - top right */}
       {hasMultipleImages && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
+        <div className="absolute top-4 right-4 z-30 bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs text-white/80 font-medium">
+          {currentImageIndex + 1}/{imageUrls.length}
+        </div>
+      )}
+
+      {/* Dot indicators - bottom of image area */}
+      {hasMultipleImages && (
+        <div className="absolute bottom-[220px] left-1/2 -translate-x-1/2 z-30 flex gap-2">
           {imageUrls.map((_, index) => (
-            <div
+            <button
               key={index}
-              className={`h-1 rounded-full transition-all duration-300 ${
+              onClick={() => setCurrentImageIndex(index)}
+              className={`rounded-full transition-all duration-300 ${
                 index === currentImageIndex
-                  ? "w-6 bg-emerald-400"
-                  : "w-1.5 bg-white/40"
+                  ? "w-7 h-2.5 bg-emerald-400"
+                  : "w-2.5 h-2.5 bg-white/50 hover:bg-white/70"
               }`}
+              aria-label={`Ir para imagem ${index + 1}`}
             />
           ))}
         </div>
+      )}
+
+      {/* Desktop navigation arrows */}
+      {hasMultipleImages && (
+        <>
+          <button
+            onClick={goToPrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+            aria-label="Imagem anterior"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={goToNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+            aria-label="Pr\u00f3xima imagem"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </>
       )}
 
       {/* Property type badge */}
@@ -262,7 +329,7 @@ export function PropertyReel({
           href={`https://wa.me/?text=${whatsappMessage}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-col items-center gap-1 group"
+          className="flex flex-col items-center gap-1 group/wa"
           aria-label="WhatsApp"
           onClick={() => trackEvent('click_whatsapp')}
         >
@@ -280,7 +347,7 @@ export function PropertyReel({
         {/* Share button */}
         <button
           onClick={handleShare}
-          className="flex flex-col items-center gap-1 group"
+          className="flex flex-col items-center gap-1 group/share"
           aria-label="Compartilhar"
         >
           <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors">
@@ -292,7 +359,7 @@ export function PropertyReel({
         {/* Ver Detalhes button */}
         <Link
           href={`/imoveis/${id}`}
-          className="flex flex-col items-center gap-1 group"
+          className="flex flex-col items-center gap-1 group/details"
           aria-label="Ver detalhes"
           onClick={() => trackEvent('click_details')}
         >

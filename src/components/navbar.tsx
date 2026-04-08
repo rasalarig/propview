@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Search, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus } from "lucide-react";
+import { Search, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 
@@ -13,6 +13,7 @@ export function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [alertCount, setAlertCount] = useState(0);
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -42,6 +43,27 @@ export function Navbar() {
     };
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadMsgCount(0);
+      return;
+    }
+    const fetchUnreadMessages = async () => {
+      try {
+        const res = await fetch("/api/conversations/unread");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadMsgCount(data.unread_count || 0);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    fetchUnreadMessages();
+    const interval = setInterval(fetchUnreadMessages, 30000);
     return () => clearInterval(interval);
   }, [user]);
 
@@ -92,6 +114,15 @@ export function Navbar() {
                 {alertCount > 0 && (
                   <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold leading-none">
                     {alertCount > 99 ? "99" : alertCount}
+                  </span>
+                )}
+              </Link>
+              <Link href="/mensagens" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 relative">
+                <MessageCircle className="w-3.5 h-3.5" />
+                Mensagens
+                {unreadMsgCount > 0 && (
+                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold leading-none">
+                    {unreadMsgCount > 99 ? "99" : unreadMsgCount}
                   </span>
                 )}
               </Link>
@@ -204,6 +235,14 @@ export function Navbar() {
                   {alertCount > 0 && (
                     <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold leading-none">
                       {alertCount > 99 ? "99" : alertCount}
+                    </span>
+                  )}
+                </Link>
+                <Link href="/mensagens" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <MessageCircle className="w-3.5 h-3.5" /> Mensagens
+                  {unreadMsgCount > 0 && (
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold leading-none">
+                      {unreadMsgCount > 99 ? "99" : unreadMsgCount}
                     </span>
                   )}
                 </Link>
