@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const clientId = process.env.GOOGLE_CLIENT_ID!;
-  const redirectUri = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
+  const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
   const params = new URLSearchParams({
     client_id: clientId,

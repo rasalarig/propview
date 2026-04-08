@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openaiSearch, aiSearch, localSearch } from "@/lib/search";
+import { openaiSearch, localSearch } from "@/lib/search";
 
 export async function GET(request: NextRequest) {
   const queryText = request.nextUrl.searchParams.get("q");
@@ -9,19 +9,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const hasOpenAI = !!process.env.OPENAI_API_KEY;
-    const hasClaude = !!process.env.ANTHROPIC_API_KEY;
+    const hasAI = !!process.env.OPENAI_API_KEY || !!process.env.ANTHROPIC_API_KEY;
 
     let results;
     let mode: string;
 
-    if (hasOpenAI) {
+    if (hasAI) {
+      // Two-step AI search: AI generates filters, then we apply them locally
       results = await openaiSearch(queryText);
-      mode = "openai";
-    } else if (hasClaude) {
-      results = await aiSearch(queryText);
-      mode = "claude";
+      mode = "ai_filters";
     } else {
+      // No AI keys — pure keyword fallback
       results = await localSearch(queryText);
       mode = "local";
     }

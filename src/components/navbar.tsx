@@ -57,18 +57,13 @@ export function Navbar() {
 
   return (
     <header className="hidden md:block fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center group">
-          <div className="h-28 w-80 relative">
-            <Image
-              src="/logo_novo.png"
-              alt="PropView"
-              width={1536}
-              height={1024}
-              className="object-contain w-full h-full"
-              priority
-            />
-          </div>
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+        <Link href="/" className="flex items-center group flex-shrink-0">
+          <img
+            src="/logo_novo.png"
+            alt="PropView"
+            className="h-16 w-auto"
+          />
         </Link>
 
         {/* Desktop Nav */}

@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const redirectUri = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
+    const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
     // Exchange code for tokens
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {

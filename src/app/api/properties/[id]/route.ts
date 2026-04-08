@@ -97,6 +97,7 @@ export async function PUT(
       details,
       latitude,
       longitude,
+      imageUrls,
     } = body;
 
     await query(
@@ -136,7 +137,40 @@ export async function PUT(
       ]
     );
 
-    const updated = await getOne('SELECT * FROM properties WHERE id = $1', [params.id]);
+    // Handle image updates if imageUrls is provided
+    if (imageUrls && Array.isArray(imageUrls)) {
+      // Delete existing images
+      await query('DELETE FROM property_images WHERE property_id = $1', [params.id]);
+
+      // Insert new images
+      for (const img of imageUrls) {
+        if (img.url && img.url.trim()) {
+          await query(
+            `INSERT INTO property_images (property_id, filename, original_name, is_cover)
+             VALUES ($1, $2, $3, $4)`,
+            [
+              params.id,
+              img.url.trim(),
+              img.url.trim().split('/').pop() || 'image',
+              img.is_cover ? 1 : 0,
+            ]
+          );
+        }
+      }
+    }
+
+    const updated = await getOne(
+      `SELECT p.*,
+        COALESCE((SELECT json_agg(json_build_object(
+          'id', pi.id,
+          'filename', pi.filename,
+          'original_name', pi.original_name,
+          'is_cover', pi.is_cover
+        )) FROM property_images pi WHERE pi.property_id = p.id), '[]'::json) as images
+      FROM properties p
+      WHERE p.id = $1`,
+      [params.id]
+    );
 
     return NextResponse.json(updated);
   } catch (error) {

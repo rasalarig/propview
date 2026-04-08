@@ -14,7 +14,7 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: NEXTAUTH_URL
-        sync: false
+        value: "https://propview-ad4d.onrender.com"
       - key: NODE_ENV
         value: production
       - key: PORT

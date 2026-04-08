@@ -1,5 +1,7 @@
 import { getAll } from "./db";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 interface Property {
   id: number;
   title: string;
@@ -22,7 +24,27 @@ interface SearchResult {
   matchReasons: string[];
 }
 
-// Normalize text for comparison (remove accents, lowercase)
+interface SearchFilters {
+  type: string[] | null;
+  min_price: number | null;
+  max_price: number | null;
+  min_area: number | null;
+  max_area: number | null;
+  min_bedrooms: number | null;
+  min_bathrooms: number | null;
+  min_parking: number | null;
+  city: string | null;
+  neighborhood: string | null;
+  state: string | null;
+  must_have: string[];
+  must_not_have: string[];
+  keywords: string[];
+  exclude_keywords: string[];
+  sort_by: "relevance" | "price_asc" | "price_desc" | "area_asc" | "area_desc" | "newest";
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function normalize(text: string): string {
   return text
     .toLowerCase()
@@ -31,461 +53,452 @@ function normalize(text: string): string {
     .trim();
 }
 
-// Extract all searchable text from a property
-function getSearchableText(property: Property): string {
-  const chars = JSON.parse(property.characteristics || "[]") as string[];
-  const details = JSON.parse(property.details || "{}");
+const FILTER_GENERATION_PROMPT = `You are a real estate search assistant for Brazil. Given a user's search query in Portuguese (or any language), extract structured search filters.
 
-  const parts = [
-    property.title,
-    property.description,
-    property.type,
-    property.address,
-    property.city,
-    property.state,
-    property.neighborhood || "",
-    ...chars,
-    ...Object.entries(details).map(([k, v]) => `${k} ${v}`),
-  ];
+IMPORTANT RULES:
+- "X metros" or "X m2" means area in square meters
+- "X quartos" or "X dormitórios" means bedrooms
+- "X banheiros" means bathrooms
+- "X vagas" means parking spots
+- "até X" or "menos de X" means maximum
+- "mais de X" or "acima de X" means minimum
+- "de X metros" without "mais/menos" means approximately that area (set min to 90% and max to 110%)
+- Price: "500 mil" = 500000, "1 milhão" = 1000000, "1.5 milhão" = 1500000
+- "barato" = max_price contextual (under 300000 for apartments, under 500000 for houses)
+- "caro" or "alto padrão" or "luxo" = min_price contextual (above 800000)
+- "sem X" or "fora de X" or "não quero X" = must_not_have or exclude
+- "perto de X" or "próximo a X" = add X to keywords
+- "em [city]" or "no [neighborhood]" = set city/neighborhood filter
+- "casa" -> type includes "casa", "apartamento" -> type includes "apartamento", "terreno" -> type includes "terreno"
+- "casa térrea" -> type includes "casa", must_have includes "térrea" or "terrea"
+- If the user mentions a property type, set it. If not, leave null (any type).
+- Always return valid JSON. Never return text outside the JSON.
+- When query is just a type like "casa" or "terreno", only set the type filter. Leave everything else null/empty.
 
-  return normalize(parts.join(" "));
+Return ONLY this JSON structure (no markdown, no explanation, no extra text):
+{
+  "type": ["casa"] or ["apartamento"] or null,
+  "min_price": number or null,
+  "max_price": number or null,
+  "min_area": number or null,
+  "max_area": number or null,
+  "min_bedrooms": number or null,
+  "min_bathrooms": number or null,
+  "min_parking": number or null,
+  "city": "city name" or null,
+  "neighborhood": "neighborhood name" or null,
+  "state": "SP" or null,
+  "must_have": ["piscina", "churrasqueira"],
+  "must_not_have": ["condominio fechado"],
+  "keywords": ["vista", "serra"],
+  "exclude_keywords": [],
+  "sort_by": "relevance"
 }
 
-// Minimum score threshold for local search results
-const LOCAL_SEARCH_MIN_SCORE = 15;
+EXAMPLES:
+Query: "casa até 500 mil com piscina"
+{"type":["casa"],"min_price":null,"max_price":500000,"min_area":null,"max_area":null,"min_bedrooms":null,"min_bathrooms":null,"min_parking":null,"city":null,"neighborhood":null,"state":null,"must_have":["piscina"],"must_not_have":[],"keywords":[],"exclude_keywords":[],"sort_by":"price_asc"}
 
-// Minimum score threshold for AI search results
-const AI_SEARCH_MIN_SCORE = 50;
+Query: "apartamento de 100 metros com 3 quartos"
+{"type":["apartamento"],"min_price":null,"max_price":null,"min_area":90,"max_area":110,"min_bedrooms":3,"min_bathrooms":null,"min_parking":null,"city":null,"neighborhood":null,"state":null,"must_have":[],"must_not_have":[],"keywords":[],"exclude_keywords":[],"sort_by":"relevance"}
 
-// Extract negative criteria from the query (words/phrases the user wants to EXCLUDE)
-function extractNegativeCriteria(normalizedQuery: string): string[] {
-  const negatives: string[] = [];
+Query: "terreno em Atibaia fora de condomínio"
+{"type":["terreno"],"min_price":null,"max_price":null,"min_area":null,"max_area":null,"min_bedrooms":null,"min_bathrooms":null,"min_parking":null,"city":"Atibaia","neighborhood":null,"state":null,"must_have":[],"must_not_have":["condominio","condomínio"],"keywords":[],"exclude_keywords":["condominio","condomínio"],"sort_by":"relevance"}
 
-  // Patterns: "fora de X", "sem X", "nao X", "nao quero X", "sem ser X"
-  const patterns = [
-    /fora de\s+(\S+(?:\s+\S+)?)/g,
-    /sem\s+(\S+(?:\s+\S+)?)/g,
-    /nao\s+(?:quero\s+)?(\S+(?:\s+\S+)?)/g,
-    /sem ser\s+(\S+(?:\s+\S+)?)/g,
-    /excluir\s+(\S+(?:\s+\S+)?)/g,
-  ];
+Query: "casa térrea barata com churrasqueira sem condomínio"
+{"type":["casa"],"min_price":null,"max_price":500000,"min_area":null,"max_area":null,"min_bedrooms":null,"min_bathrooms":null,"min_parking":null,"city":null,"neighborhood":null,"state":null,"must_have":["terrea","churrasqueira"],"must_not_have":["condominio","condomínio"],"keywords":[],"exclude_keywords":["condominio","condomínio"],"sort_by":"price_asc"}
 
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(normalizedQuery)) !== null) {
-      negatives.push(normalize(match[1]));
+Query: "casa"
+{"type":["casa"],"min_price":null,"max_price":null,"min_area":null,"max_area":null,"min_bedrooms":null,"min_bathrooms":null,"min_parking":null,"city":null,"neighborhood":null,"state":null,"must_have":[],"must_not_have":[],"keywords":[],"exclude_keywords":[],"sort_by":"relevance"}`;
+
+// ─── Step 1: AI Generates Structured Filters ─────────────────────────────────
+
+async function aiGenerateFilters(queryText: string): Promise<SearchFilters> {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  // Try OpenAI first
+  if (openaiKey) {
+    try {
+      const OpenAI = (await import("openai")).default;
+      const client = new OpenAI({ apiKey: openaiKey });
+
+      const response = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: FILTER_GENERATION_PROMPT },
+          { role: "user", content: queryText },
+        ],
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (content) {
+        const filters = JSON.parse(content) as SearchFilters;
+        console.log("[Search] AI filters (OpenAI):", JSON.stringify(filters));
+        return sanitizeFilters(filters);
+      }
+    } catch (error) {
+      console.error("[Search] OpenAI filter generation failed:", error);
     }
   }
 
-  return negatives;
-}
+  // Fallback to Claude
+  if (anthropicKey) {
+    try {
+      const Anthropic = (await import("@anthropic-ai/sdk")).default;
+      const client = new Anthropic({ apiKey: anthropicKey });
 
-// Smart local search with scoring
-export async function localSearch(queryText: string): Promise<SearchResult[]> {
-  const properties = await getAll(
-    "SELECT * FROM properties WHERE status = 'active'"
-  ) as Property[];
-  const normalizedQuery = normalize(queryText);
+      const response = await client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: `${FILTER_GENERATION_PROMPT}\n\nQuery: "${queryText}"`,
+          },
+        ],
+      });
 
-  // Extract negative criteria first
-  const negativeCriteria = extractNegativeCriteria(normalizedQuery);
-
-  // Remove negative phrases from query to get positive-only words
-  let positiveQuery = normalizedQuery;
-  const negPhrasePatterns = [
-    /fora de\s+\S+(?:\s+\S+)?/g,
-    /sem\s+\S+(?:\s+\S+)?/g,
-    /nao\s+(?:quero\s+)?\S+(?:\s+\S+)?/g,
-    /sem ser\s+\S+(?:\s+\S+)?/g,
-    /excluir\s+\S+(?:\s+\S+)?/g,
-  ];
-  for (const pattern of negPhrasePatterns) {
-    positiveQuery = positiveQuery.replace(pattern, " ");
+      const textBlock = response.content.find((c) => c.type === "text");
+      if (textBlock && textBlock.type === "text") {
+        let jsonText = textBlock.text.trim();
+        // Strip markdown code blocks if present
+        const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (jsonMatch) {
+          jsonText = jsonMatch[1].trim();
+        }
+        const filters = JSON.parse(jsonText) as SearchFilters;
+        console.log("[Search] AI filters (Claude):", JSON.stringify(filters));
+        return sanitizeFilters(filters);
+      }
+    } catch (error) {
+      console.error("[Search] Claude filter generation failed:", error);
+    }
   }
 
-  const queryWords = positiveQuery.split(/\s+/).filter((w) => w.length > 2);
+  // No AI available — return empty filters (will match everything, scored by keywords)
+  console.log("[Search] No AI available, returning empty filters");
+  return getEmptyFilters();
+}
 
-  // Common synonyms/related terms in Portuguese real estate
-  const synonyms: Record<string, string[]> = {
-    barato: ["baixo preco", "economico", "acessivel"],
-    caro: ["alto padrao", "luxo", "premium"],
-    grande: ["amplo", "espacoso", "generoso"],
-    pequeno: ["compacto", "menor"],
-    seguro: ["seguranca", "condominio fechado", "portaria"],
-    verde: ["arvores", "vegetacao", "mata", "jardim", "area verde"],
-    arvore: [
-      "arvores",
-      "frutiferas",
-      "mangueira",
-      "jabuticabeira",
-      "vegetacao",
-    ],
-    fruta: ["frutiferas", "mangueira", "jabuticabeira", "pomar"],
-    perto: ["proximo", "perto de"],
-    escola: ["proximo escola", "perto escola"],
-    comercio: ["proximo comercio", "perto comercio"],
-    plano: ["terreno plano", "sem aclive"],
-    vista: ["vista panoramica", "vista privilegiada"],
-    tranquilo: ["calmo", "residencial", "rua sem saida"],
-    familia: ["familiar", "seguro", "criancas"],
-    natureza: ["arvores", "verde", "serra", "mata", "area verde"],
-    condominio: ["condominio fechado", "seguranca 24h"],
-    documentacao: ["documentacao ok", "escritura", "pronto transferencia"],
-    construir: ["pronto para construir", "terreno plano"],
+function getEmptyFilters(): SearchFilters {
+  return {
+    type: null,
+    min_price: null,
+    max_price: null,
+    min_area: null,
+    max_area: null,
+    min_bedrooms: null,
+    min_bathrooms: null,
+    min_parking: null,
+    city: null,
+    neighborhood: null,
+    state: null,
+    must_have: [],
+    must_not_have: [],
+    keywords: [],
+    exclude_keywords: [],
+    sort_by: "relevance",
   };
+}
+
+function sanitizeFilters(filters: SearchFilters): SearchFilters {
+  return {
+    type: Array.isArray(filters.type) && filters.type.length > 0 ? filters.type.map((t) => t.toLowerCase()) : null,
+    min_price: typeof filters.min_price === "number" ? filters.min_price : null,
+    max_price: typeof filters.max_price === "number" ? filters.max_price : null,
+    min_area: typeof filters.min_area === "number" ? filters.min_area : null,
+    max_area: typeof filters.max_area === "number" ? filters.max_area : null,
+    min_bedrooms: typeof filters.min_bedrooms === "number" ? filters.min_bedrooms : null,
+    min_bathrooms: typeof filters.min_bathrooms === "number" ? filters.min_bathrooms : null,
+    min_parking: typeof filters.min_parking === "number" ? filters.min_parking : null,
+    city: typeof filters.city === "string" ? filters.city : null,
+    neighborhood: typeof filters.neighborhood === "string" ? filters.neighborhood : null,
+    state: typeof filters.state === "string" ? filters.state : null,
+    must_have: Array.isArray(filters.must_have) ? filters.must_have : [],
+    must_not_have: Array.isArray(filters.must_not_have) ? filters.must_not_have : [],
+    keywords: Array.isArray(filters.keywords) ? filters.keywords : [],
+    exclude_keywords: Array.isArray(filters.exclude_keywords) ? filters.exclude_keywords : [],
+    sort_by: filters.sort_by || "relevance",
+  };
+}
+
+// ─── Step 2: Apply Filters to Properties ─────────────────────────────────────
+
+function applyFilters(filters: SearchFilters, properties: Property[]): SearchResult[] {
+  return properties
+    .map((property) => {
+      let score = 100;
+      const reasons: string[] = [];
+
+      const chars: string[] = (() => {
+        try {
+          return (JSON.parse(property.characteristics || "[]") as string[]).map((c) => c.toLowerCase());
+        } catch {
+          return [];
+        }
+      })();
+
+      const details: Record<string, unknown> = (() => {
+        try {
+          return JSON.parse(property.details || "{}");
+        } catch {
+          return {};
+        }
+      })();
+
+      const searchText = [
+        property.title,
+        property.description,
+        property.neighborhood || "",
+        property.address || "",
+        ...chars,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const searchTextNorm = normalize(searchText);
+
+      // ── Type filter (mandatory if specified) ──
+      if (filters.type && filters.type.length > 0) {
+        const propType = property.type.toLowerCase();
+        if (!filters.type.some((t) => propType.includes(t) || t.includes(propType))) {
+          return null; // Hard exclude
+        }
+        reasons.push(`Tipo: ${property.type}`);
+      }
+
+      // ── Price filters (mandatory) ──
+      if (filters.min_price !== null && property.price < filters.min_price) return null;
+      if (filters.max_price !== null && property.price > filters.max_price) return null;
+      if (filters.min_price !== null || filters.max_price !== null) {
+        reasons.push(
+          `Preço: R$ ${property.price.toLocaleString("pt-BR")}`
+        );
+      }
+
+      // ── Area filters (mandatory) ──
+      if (filters.min_area !== null && property.area < filters.min_area) return null;
+      if (filters.max_area !== null && property.area > filters.max_area) return null;
+      if (filters.min_area !== null || filters.max_area !== null) {
+        reasons.push(`Área: ${property.area}m²`);
+      }
+
+      // ── Bedrooms (mandatory if specified) ──
+      if (filters.min_bedrooms !== null) {
+        const propBedrooms = (details.bedrooms as number) || 0;
+        if (propBedrooms < filters.min_bedrooms) return null;
+        reasons.push(`${propBedrooms} quartos`);
+      }
+
+      // ── Bathrooms (mandatory if specified) ──
+      if (filters.min_bathrooms !== null) {
+        const propBathrooms = (details.bathrooms as number) || 0;
+        if (propBathrooms < filters.min_bathrooms) return null;
+        reasons.push(`${propBathrooms} banheiros`);
+      }
+
+      // ── Parking (mandatory if specified) ──
+      if (filters.min_parking !== null) {
+        const propParking = (details.parking as number) || 0;
+        if (propParking < filters.min_parking) return null;
+        reasons.push(`${propParking} vagas`);
+      }
+
+      // ── City filter — also check neighborhood (AI sometimes confuses them) ──
+      if (filters.city) {
+        const cityNorm = normalize(filters.city);
+        const propCity = normalize(property.city);
+        const propNeigh = normalize(property.neighborhood || "");
+        const propAddr = normalize(property.address || "");
+        const matchesCity = propCity.includes(cityNorm) || cityNorm.includes(propCity);
+        const matchesNeigh = propNeigh.includes(cityNorm) || cityNorm.includes(propNeigh);
+        const matchesAddr = propAddr.includes(cityNorm);
+        if (!matchesCity && !matchesNeigh && !matchesAddr) return null;
+        reasons.push(matchesCity ? `Cidade: ${property.city}` : `Bairro: ${property.neighborhood}`);
+      }
+
+      // ── Neighborhood filter — also check city ──
+      if (filters.neighborhood) {
+        const neighNorm = normalize(filters.neighborhood);
+        const propNeigh = normalize(property.neighborhood || "");
+        const propCity = normalize(property.city);
+        const matchesNeigh = propNeigh.includes(neighNorm) || neighNorm.includes(propNeigh);
+        const matchesCity = propCity.includes(neighNorm) || neighNorm.includes(propCity);
+        if (!matchesNeigh && !matchesCity) return null;
+        reasons.push(`Bairro: ${property.neighborhood || property.city}`);
+      }
+
+      // ── State filter (mandatory if specified) ──
+      if (filters.state) {
+        const stateNorm = normalize(filters.state);
+        const propState = normalize(property.state);
+        if (!propState.includes(stateNorm) && !stateNorm.includes(propState)) return null;
+      }
+
+      // ── Must-have characteristics (mandatory) ──
+      for (const must of filters.must_have) {
+        const mustNorm = normalize(must);
+        const found =
+          chars.some((c) => normalize(c).includes(mustNorm)) ||
+          searchTextNorm.includes(mustNorm);
+        if (!found) return null; // Hard exclude
+        reasons.push(`Possui "${must}"`);
+      }
+
+      // ── Must-NOT-have characteristics (mandatory exclusion) ──
+      for (const mustNot of filters.must_not_have) {
+        const mustNotNorm = normalize(mustNot);
+        // Check characteristics
+        const foundInChars = chars.some((c) => normalize(c).includes(mustNotNorm));
+        // Check full text
+        const foundInText = searchTextNorm.includes(mustNotNorm);
+        // Check details.gated_community for condominio
+        const isCondoExclusion = mustNotNorm.includes("condominio");
+        const foundInDetails =
+          isCondoExclusion &&
+          (details.gated_community === true ||
+            details.gated_community === "true" ||
+            details.gated_community === "sim");
+
+        if (foundInChars || foundInText || foundInDetails) return null; // Hard exclude
+      }
+
+      // ── Keywords (bonus scoring, not mandatory) ──
+      for (const kw of filters.keywords) {
+        const kwNorm = normalize(kw);
+        if (
+          searchTextNorm.includes(kwNorm) ||
+          chars.some((c) => normalize(c).includes(kwNorm))
+        ) {
+          score += 10;
+          reasons.push(`Contém "${kw}"`);
+        }
+      }
+
+      // ── Exclude keywords (mandatory exclusion) ──
+      for (const kw of filters.exclude_keywords) {
+        const kwNorm = normalize(kw);
+        if (searchTextNorm.includes(kwNorm)) return null;
+      }
+
+      if (reasons.length === 0) {
+        reasons.push("Corresponde à sua busca");
+      }
+
+      return { property, score, matchReasons: reasons };
+    })
+    .filter((r): r is SearchResult => r !== null)
+    .sort((a, b) => {
+      if (filters.sort_by === "price_asc") return a.property.price - b.property.price;
+      if (filters.sort_by === "price_desc") return b.property.price - a.property.price;
+      if (filters.sort_by === "area_asc") return a.property.area - b.property.area;
+      if (filters.sort_by === "area_desc") return b.property.area - a.property.area;
+      // Default: sort by score descending
+      return b.score - a.score;
+    });
+}
+
+// ─── Main Search: Two-Step AI Search ─────────────────────────────────────────
+
+export async function openaiSearch(queryText: string): Promise<SearchResult[]> {
+  const properties = (await getAll(
+    "SELECT * FROM properties WHERE status = 'active'"
+  )) as Property[];
+
+  if (properties.length === 0) return [];
+
+  try {
+    // Step 1: AI generates structured filters
+    const filters = await aiGenerateFilters(queryText);
+
+    // Step 2: Apply filters to all properties
+    const results = applyFilters(filters, properties);
+
+    console.log("[Search] Results:", results.length, "out of", properties.length, "properties");
+    return results;
+  } catch (error) {
+    console.error("[Search] Two-step search failed, falling back to local:", error);
+    return localSearch(queryText, properties);
+  }
+}
+
+// ─── Fallback: Simple Keyword Search ─────────────────────────────────────────
+
+export async function localSearch(
+  queryText: string,
+  preloadedProperties?: Property[]
+): Promise<SearchResult[]> {
+  const properties =
+    preloadedProperties ||
+    ((await getAll("SELECT * FROM properties WHERE status = 'active'")) as Property[]);
+
+  const queryNorm = normalize(queryText);
+  const queryWords = queryNorm.split(/\s+/).filter((w) => w.length > 2);
+
+  if (queryWords.length === 0) return [];
 
   const results: SearchResult[] = [];
 
   for (const property of properties) {
-    const searchableText = getSearchableText(property);
-    const chars = JSON.parse(property.characteristics || "[]") as string[];
-    const normalizedChars = chars.map(normalize);
-    const details = JSON.parse(property.details || "{}");
+    const chars: string[] = (() => {
+      try {
+        return JSON.parse(property.characteristics || "[]") as string[];
+      } catch {
+        return [];
+      }
+    })();
+
+    const searchText = normalize(
+      [
+        property.title,
+        property.description,
+        property.type,
+        property.address,
+        property.city,
+        property.state,
+        property.neighborhood || "",
+        ...chars,
+      ].join(" ")
+    );
+
     let score = 0;
-    const matchReasons: string[] = [];
-    let excluded = false;
+    const reasons: string[] = [];
 
-    // NEGATIVE CRITERIA CHECK: if any negative keyword is found in the property, exclude it
-    for (const neg of negativeCriteria) {
-      const negNorm = normalize(neg);
-      // Check in searchable text (title, description, characteristics, details, etc.)
-      if (searchableText.includes(negNorm)) {
-        excluded = true;
-        break;
-      }
-      // Special handling for "condominio" - also check details.gated_community
-      if (negNorm.includes("condominio")) {
-        if (
-          details.gated_community === true ||
-          details.gated_community === "true" ||
-          details.gated_community === "sim" ||
-          normalizedChars.some(
-            (c) => c.includes("condominio") || c.includes("fechado")
-          ) ||
-          normalize(property.neighborhood || "").includes("condominio")
-        ) {
-          excluded = true;
-          break;
-        }
-      }
-    }
-
-    if (excluded) {
-      continue; // Skip this property entirely
-    }
-
-    // Direct word matching
     for (const word of queryWords) {
-      if (searchableText.includes(word)) {
+      if (searchText.includes(word)) {
         score += 10;
 
-        // Check if it matches a characteristic specifically (higher weight)
-        if (normalizedChars.some((c) => c.includes(word))) {
-          score += 5;
-          const matchedChar = chars.find((_, i) =>
-            normalizedChars[i].includes(word)
-          );
-          if (matchedChar) matchReasons.push(`Possui "${matchedChar}"`);
-        }
-
-        // Title match (highest weight)
         if (normalize(property.title).includes(word)) {
-          score += 8;
+          score += 5;
         }
-
-        // City/location match
+        if (normalize(property.type).includes(word)) {
+          score += 10;
+          reasons.push(`Tipo: ${property.type}`);
+        }
         if (
           normalize(property.city).includes(word) ||
           normalize(property.neighborhood || "").includes(word)
         ) {
           score += 7;
-          matchReasons.push(
-            `Localizado em ${property.city}${property.neighborhood ? `, ${property.neighborhood}` : ""}`
-          );
-        }
-
-        // Type match
-        if (normalize(property.type).includes(word)) {
-          score += 10;
-          matchReasons.push(`Tipo: ${property.type}`);
-        }
-      }
-
-      // Synonym matching
-      const wordSynonyms = synonyms[word] || [];
-      for (const synonym of wordSynonyms) {
-        if (searchableText.includes(normalize(synonym))) {
-          score += 7;
-          const matchedChar = chars.find((_, i) =>
-            normalizedChars[i].includes(normalize(synonym))
-          );
-          if (matchedChar) matchReasons.push(`Possui "${matchedChar}"`);
+          reasons.push(`Localização: ${property.city}`);
         }
       }
     }
 
-    // Price-related queries
-    const priceMatch = queryText.match(
-      /(?:ate|até|menos de|abaixo de|max|máximo)\s*(?:r\$?)?\s*([\d.,]+)/i
-    );
-    if (priceMatch) {
-      const maxPrice = parseFloat(
-        priceMatch[1].replace(/\./g, "").replace(",", ".")
-      );
-      if (property.price <= maxPrice) {
-        score += 15;
-        matchReasons.push(
-          `Preco dentro do orcamento (${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(property.price)})`
-        );
-      }
-    }
-
-    // Area-related queries
-    const areaMatch = queryText.match(
-      /(?:mais de|acima de|minimo|mínimo)\s*(\d+)\s*m/i
-    );
-    if (areaMatch) {
-      const minArea = parseInt(areaMatch[1]);
-      if (property.area >= minArea) {
-        score += 12;
-        matchReasons.push(`Area de ${property.area}m2 atende o minimo`);
-      }
-    }
-
-    // If no specific reasons found but score > 0, add generic
-    if (score > 0 && matchReasons.length === 0) {
-      matchReasons.push("Corresponde a sua busca por termos gerais");
-    }
-
-    // Deduplicate reasons
-    const uniqueReasons = Array.from(new Set(matchReasons));
-
-    // Only include results above minimum score threshold
-    if (score >= LOCAL_SEARCH_MIN_SCORE) {
+    if (score >= 10) {
+      if (reasons.length === 0) reasons.push("Corresponde por palavras-chave");
+      const uniqueReasons = Array.from(new Set(reasons));
       results.push({ property, score, matchReasons: uniqueReasons });
     }
   }
 
-  // Sort by score descending
   results.sort((a, b) => b.score - a.score);
+  console.log("[Search] Local fallback results:", results.length);
   return results;
 }
 
-// AI-enhanced search using OpenAI GPT
-export async function openaiSearch(queryText: string): Promise<SearchResult[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    return aiSearch(queryText); // Try Claude, then local
-  }
-
-  try {
-    const OpenAI = (await import("openai")).default;
-    const client = new OpenAI({ apiKey });
-
-    const properties = await getAll(
-      "SELECT * FROM properties WHERE status = 'active'"
-    ) as Property[];
-
-    if (properties.length === 0) return [];
-
-    const propertySummaries = properties.map((p) => {
-      const chars = JSON.parse(p.characteristics || "[]");
-      const details = JSON.parse(p.details || "{}");
-      return {
-        id: p.id,
-        title: p.title,
-        description: p.description,
-        price: p.price,
-        area: p.area,
-        type: p.type,
-        city: p.city,
-        state: p.state,
-        neighborhood: p.neighborhood,
-        address: p.address,
-        characteristics: chars,
-        details,
-      };
-    });
-
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.1,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: `Voce e um assistente de busca imobiliaria. Analise a busca do usuario e retorne os imoveis que correspondem.
-
-REGRAS DE PONTUACAO:
-
-1. TIPO DO IMOVEL (criterio principal):
-   - Se o usuario busca "casa", retorne TODOS os imoveis com type="casa" com score 85+
-   - Se o usuario busca "terreno", retorne TODOS os imoveis com type="terreno" com score 85+
-   - Se a busca e apenas o tipo (ex: so "casa" ou so "terreno"), TODOS desse tipo recebem score 90.
-
-2. CRITERIOS ADICIONAIS (ajustam o score):
-   - "terrea" = verifique se tem "terrea" ou "térrea" nas characteristics. Se nao tem, reduza score em 30.
-   - "X quartos" = verifique details.bedrooms. Se nao bate, reduza score em 30.
-   - "piscina" ou "com piscina" = verifique se tem "piscina" nas characteristics. Se nao tem, reduza score em 30.
-   - "com X" = verifique se X existe nas characteristics, description ou details. Se nao, reduza score em 20.
-
-3. CRITERIOS NEGATIVOS (ABSOLUTOS - score 0 se violado):
-   - "fora de condominio" ou "sem condominio" = EXCLUIR (score 0) qualquer imovel que tenha "condominio" ou "condomínio" no title, description, characteristics, neighborhood OU que tenha details.gated_community=true
-   - "sem piscina" = EXCLUIR (score 0) qualquer imovel com piscina
-   - "sem X" / "fora de X" / "nao quero X" = EXCLUIR (score 0) qualquer imovel que tenha X
-   - Criterios negativos sao ABSOLUTOS: qualquer violacao = score 0, nao incluir.
-
-4. RESULTADO VAZIO E VALIDO:
-   - Se nenhum imovel corresponde, retorne { "results": [] }
-
-5. Responda em portugues brasileiro.
-
-Retorne APENAS JSON: { "results": [{ "id": number, "score": 50-100, "reasons": ["razao 1", "razao 2"] }] }`,
-        },
-        {
-          role: "user",
-          content: `Busca do usuario: "${queryText}"
-
-Imoveis disponiveis:
-${JSON.stringify(propertySummaries, null, 2)}`,
-        },
-      ],
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) return localSearch(queryText);
-
-    const parsed = JSON.parse(content) as {
-      results: Array<{ id: number; score: number; reasons: string[] }>;
-    };
-
-    return parsed.results
-      .filter((r) => r.score >= AI_SEARCH_MIN_SCORE)
-      .map((r) => {
-        const property = properties.find((p) => p.id === r.id);
-        if (!property) return null;
-        return {
-          property,
-          score: r.score,
-          matchReasons: r.reasons,
-        };
-      })
-      .filter((r): r is SearchResult => r !== null)
-      .sort((a, b) => b.score - a.score);
-  } catch (error) {
-    console.error("OpenAI search failed, falling back:", error);
-    return aiSearch(queryText); // Try Claude, then local
-  }
-}
-
-// AI-enhanced search using Claude API
-export async function aiSearch(queryText: string): Promise<SearchResult[]> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    // Fallback to local search
-    return localSearch(queryText);
-  }
-
-  try {
-    const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    const client = new Anthropic({ apiKey });
-
-    const properties = await getAll(
-      "SELECT * FROM properties WHERE status = 'active'"
-    ) as Property[];
-
-    // Build property summaries for the AI
-    const propertySummaries = properties.map((p) => {
-      const chars = JSON.parse(p.characteristics || "[]");
-      const details = JSON.parse(p.details || "{}");
-      return {
-        id: p.id,
-        title: p.title,
-        description: p.description,
-        price: p.price,
-        area: p.area,
-        type: p.type,
-        city: p.city,
-        neighborhood: p.neighborhood,
-        characteristics: chars,
-        details,
-      };
-    });
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: `Voce e um assistente de busca imobiliaria. Analise a busca do usuario e retorne os imoveis que correspondem.
-
-Busca do usuario: "${queryText}"
-
-REGRAS DE PONTUACAO:
-
-1. TIPO DO IMOVEL (criterio principal):
-   - Se o usuario busca "casa", retorne TODOS os imoveis com type="casa" com score 85+
-   - Se o usuario busca "terreno", retorne TODOS os imoveis com type="terreno" com score 85+
-   - Se a busca e apenas o tipo (ex: so "casa" ou so "terreno"), TODOS desse tipo recebem score 90.
-
-2. CRITERIOS ADICIONAIS (ajustam o score):
-   - "terrea" = verifique se tem "terrea" ou "térrea" nas characteristics. Se nao tem, reduza score em 30.
-   - "X quartos" = verifique details.bedrooms. Se nao bate, reduza score em 30.
-   - "piscina" ou "com piscina" = verifique se tem "piscina" nas characteristics. Se nao tem, reduza score em 30.
-   - "com X" = verifique se X existe nas characteristics, description ou details. Se nao, reduza score em 20.
-
-3. CRITERIOS NEGATIVOS (ABSOLUTOS - score 0 se violado):
-   - "fora de condominio" ou "sem condominio" = EXCLUIR (score 0) qualquer imovel que tenha "condominio" ou "condomínio" no title, description, characteristics, neighborhood OU que tenha details.gated_community=true
-   - "sem piscina" = EXCLUIR (score 0) qualquer imovel com piscina
-   - "sem X" / "fora de X" / "nao quero X" = EXCLUIR (score 0) qualquer imovel que tenha X
-   - Criterios negativos sao ABSOLUTOS: qualquer violacao = score 0, nao incluir.
-
-4. RESULTADO VAZIO E VALIDO:
-   - Se nenhum imovel corresponde, retorne []
-
-Imoveis disponiveis:
-${JSON.stringify(propertySummaries, null, 2)}
-
-Retorne APENAS um JSON array (sem markdown, sem texto extra): [{ "id": number, "score": 50-100, "reasons": ["razao 1"] }]
-Se nenhum combinar, retorne [].`,
-        },
-      ],
-    });
-
-    const content = response.content[0];
-    if (content.type !== "text") return localSearch(queryText);
-
-    // Extract JSON from response (handle potential markdown code blocks)
-    let jsonText = content.text.trim();
-    const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonText = jsonMatch[1].trim();
-    }
-
-    const aiResults = JSON.parse(jsonText) as Array<{
-      id: number;
-      score: number;
-      reasons: string[];
-    }>;
-
-    return aiResults
-      .filter((r) => r.score >= AI_SEARCH_MIN_SCORE)
-      .map((r) => {
-        const property = properties.find((p) => p.id === r.id);
-        if (!property) return null;
-        return {
-          property,
-          score: r.score,
-          matchReasons: r.reasons,
-        };
-      })
-      .filter((r): r is SearchResult => r !== null)
-      .sort((a, b) => b.score - a.score);
-  } catch (error) {
-    console.error("AI search failed, falling back to local:", error);
-    return localSearch(queryText);
-  }
-}
+// Re-export for backward compatibility
+export { localSearch as aiSearch };

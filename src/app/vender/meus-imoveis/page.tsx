@@ -15,6 +15,7 @@ import {
   ExternalLink,
   ChevronDown,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -323,6 +324,17 @@ export default function MeusImoveisPage() {
                         >
                           <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                           Ver
+                        </Button>
+                      </Link>
+
+                      <Link href={`/vender/imovel/${property.id}`} className="flex-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full rounded-lg text-xs"
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                          Editar
                         </Button>
                       </Link>
 
