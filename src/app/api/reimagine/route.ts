@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
   const client = new OpenAI({ apiKey: openaiKey });
 
   // Build the prompt
-  let prompt = 'Create a photorealistic interior design render of a residential room. ';
+  let prompt = 'Edit this room photo. Keep the room layout, furniture positions, and structure exactly the same. Only change what is specified: ';
 
   if (style && styleDescriptions[style]) {
     prompt += `The decoration style is ${styleDescriptions[style]}. `;
@@ -96,20 +96,29 @@ export async function POST(request: NextRequest) {
     prompt += custom_prompt + '. ';
   }
 
-  prompt += 'Professional real estate photography, natural lighting, high quality, wide angle shot, no people.';
+  prompt += 'Maintain the original room perspective, lighting, and composition. Only apply the requested changes.';
 
   try {
-    const response = await client.images.generate({
-      model: 'dall-e-2',
-      prompt,
-      n: 1,
+    // Fetch the original image and convert to a File object
+    const imageResponse = await fetch(image_url);
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    const imageFile = new File([imageBuffer], 'room.png', { type: 'image/png' });
+
+    const response = await client.images.edit({
+      model: 'gpt-image-1',
+      image: imageFile,
+      prompt: prompt,
       size: '1024x1024',
+      quality: 'low',
     });
 
-    const generatedUrl = response.data[0]?.url;
-    if (!generatedUrl) {
+    // gpt-image-1 edit returns base64 data by default
+    const base64Image = response.data[0]?.b64_json;
+    if (!base64Image) {
       return NextResponse.json({ error: 'Falha ao gerar imagem' }, { status: 500 });
     }
+
+    const generatedUrl = `data:image/png;base64,${base64Image}`;
 
     return NextResponse.json({
       original_url: image_url,
