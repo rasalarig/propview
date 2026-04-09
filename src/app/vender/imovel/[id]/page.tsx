@@ -88,7 +88,7 @@ interface VideoUrlEntry {
 const SUPPORTED_VIDEO_PLATFORMS = [
   { pattern: /(?:youtube\.com\/(?:watch|embed|shorts)|youtu\.be\/)/i, name: 'YouTube' },
   { pattern: /tiktok\.com/i, name: 'TikTok' },
-  { pattern: /instagram\.com\/(?:reel|p)\//i, name: 'Instagram' },
+  { pattern: /instagram\.com\/(?:reels?|p)\//i, name: 'Instagram' },
   { pattern: /vimeo\.com\/\d+/i, name: 'Vimeo' },
 ];
 
