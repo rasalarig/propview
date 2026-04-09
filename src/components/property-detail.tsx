@@ -100,7 +100,7 @@ export function PropertyDetail({ property }: PropertyProps) {
     bathrooms: { icon: Droplets, label: "Banheiros" },
     garage: { icon: Car, label: "Vagas" },
     pool: { icon: Droplets, label: "Piscina" },
-    gated_community: { icon: Shield, label: "Condominio Fechado" },
+    gated_community: { icon: Shield, label: "Condomínio Fechado" },
     paved_street: { icon: Car, label: "Rua Asfaltada" },
   };
 
@@ -113,7 +113,7 @@ export function PropertyDetail({ property }: PropertyProps) {
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Voltar para imoveis
+          Voltar para imóveis
         </Link>
 
         {/* Image Gallery */}
@@ -232,7 +232,7 @@ export function PropertyDetail({ property }: PropertyProps) {
                   {property.area}m&sup2;
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Area Total
+                  Área Total
                 </p>
               </Card>
               {Number(details.bedrooms) > 0 && (
@@ -267,7 +267,7 @@ export function PropertyDetail({ property }: PropertyProps) {
 
             {/* Description */}
             <div>
-              <h2 className="text-lg font-semibold mb-3">Descricao</h2>
+              <h2 className="text-lg font-semibold mb-3">Descrição</h2>
               <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                 {property.description}
               </p>
@@ -280,7 +280,7 @@ export function PropertyDetail({ property }: PropertyProps) {
               <div>
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <Tag className="w-4 h-4 text-emerald-400" />
-                  Caracteristicas
+                  Características
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {characteristics.map((tag) => (
@@ -300,7 +300,7 @@ export function PropertyDetail({ property }: PropertyProps) {
 
             {/* Details/Amenities */}
             <div>
-              <h2 className="text-lg font-semibold mb-3">Detalhes do Imovel</h2>
+              <h2 className="text-lg font-semibold mb-3">Detalhes do Imóvel</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {Object.entries(details).map(([key, value]) => {
                   const detail = detailIcons[key];
@@ -310,7 +310,7 @@ export function PropertyDetail({ property }: PropertyProps) {
                     typeof value === "boolean"
                       ? value
                         ? "Sim"
-                        : "Nao"
+                        : "Não"
                       : String(value);
 
                   return (
@@ -335,7 +335,7 @@ export function PropertyDetail({ property }: PropertyProps) {
             <div>
               <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-emerald-400" />
-                Localizacao
+                Localização
               </h2>
               <PropertyMap
                 latitude={property.latitude}
@@ -370,7 +370,7 @@ export function PropertyDetail({ property }: PropertyProps) {
                 </Button>
 
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Ola! Tenho interesse no imovel: ${property.title}\n${property.city}, ${property.state}\nValor: ${formatPrice(property.price)}\n\nVi no PropView!`)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel: ${property.title}\n${property.city}, ${property.state}\nValor: ${formatPrice(property.price)}\n\nVi no PropView!`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"

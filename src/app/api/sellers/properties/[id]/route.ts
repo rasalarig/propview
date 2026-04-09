@@ -11,7 +11,7 @@ export async function PATCH(
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: 'Nao autenticado' }, { status: 401 });
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
     const seller = await getOne(
@@ -20,13 +20,13 @@ export async function PATCH(
     );
 
     if (!seller) {
-      return NextResponse.json({ error: 'Vendedor nao encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'Vendedor não encontrado' }, { status: 404 });
     }
 
     const { id } = await params;
     const propertyId = parseInt(id, 10);
     if (isNaN(propertyId)) {
-      return NextResponse.json({ error: 'ID invalido' }, { status: 400 });
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
     // Verify property belongs to seller
@@ -36,7 +36,7 @@ export async function PATCH(
     );
 
     if (!property) {
-      return NextResponse.json({ error: 'Imovel nao encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'Imóvel não encontrado' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -44,7 +44,7 @@ export async function PATCH(
 
     if (!status || !['active', 'inactive', 'sold'].includes(status)) {
       return NextResponse.json(
-        { error: 'Status invalido. Use: active, inactive ou sold' },
+        { error: 'Status inválido. Use: active, inactive ou sold' },
         { status: 400 }
       );
     }

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Painel Admin | PropView",
-  description: "Gerenciar imoveis cadastrados",
+  description: "Gerenciar imóveis cadastrados",
 };
 
 interface Property {
@@ -45,7 +45,7 @@ export default async function AdminPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Painel Admin</h1>
             <p className="text-muted-foreground mt-1">
-              {properties.length} imoveis cadastrados
+              {properties.length} imóveis cadastrados
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export default async function AdminPage() {
             <Link href="/admin/cadastro">
               <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white">
                 <Plus className="w-4 h-4 mr-2" />
-                Novo Imovel
+                Novo Imóvel
               </Button>
             </Link>
           </div>

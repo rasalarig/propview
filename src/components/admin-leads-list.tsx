@@ -195,7 +195,7 @@ export function AdminLeadsList({ leads: initialLeads, stats }: AdminLeadsListPro
                   </div>
 
                   <a
-                    href={`https://wa.me/${lead.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Ola ${lead.name}! Vi que voce demonstrou interesse no imovel "${lead.property_title}". Como posso ajudar?`)}`}
+                    href={`https://wa.me/${lead.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá ${lead.name}! Vi que você demonstrou interesse no imóvel "${lead.property_title}". Como posso ajudar?`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

@@ -134,7 +134,7 @@ export default function EditarImovelPage() {
   // Details (casa/apartamento only)
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
-  const [suites, setSuites] = useState("");
+  const [suites, setSuítes] = useState("");
   const [parking, setParking] = useState("");
 
   // Characteristics
@@ -173,12 +173,12 @@ export default function EditarImovelPage() {
       try {
         const res = await fetch(`/api/properties/${propertyId}`);
         if (res.status === 404) {
-          setLoadError("Imovel nao encontrado.");
+          setLoadError("Imóvel não encontrado.");
           setLoadingProperty(false);
           return;
         }
         if (!res.ok) {
-          setLoadError("Erro ao carregar imovel.");
+          setLoadError("Erro ao carregar imóvel.");
           setLoadingProperty(false);
           return;
         }
@@ -203,7 +203,7 @@ export default function EditarImovelPage() {
         const details = data.details || {};
         setBedrooms(details.bedrooms ? String(details.bedrooms) : "");
         setBathrooms(details.bathrooms ? String(details.bathrooms) : "");
-        setSuites(details.suites ? String(details.suites) : "");
+        setSuítes(details.suites ? String(details.suites) : "");
         setParking(details.parking ? String(details.parking) : "");
 
         // Characteristics
@@ -246,7 +246,7 @@ export default function EditarImovelPage() {
 
         setLoadingProperty(false);
       } catch {
-        setLoadError("Erro de conexao ao carregar imovel.");
+        setLoadError("Erro de conexão ao carregar imóvel.");
         setLoadingProperty(false);
       }
     }
@@ -313,7 +313,7 @@ export default function EditarImovelPage() {
       const isVideo = ACCEPTED_VIDEO_TYPES.includes(file.type);
 
       if (!isImage && !isVideo) {
-        setError(`Tipo de arquivo nao permitido: ${file.name}`);
+        setError(`Tipo de arquivo não permitido: ${file.name}`);
         continue;
       }
 
@@ -366,11 +366,11 @@ export default function EditarImovelPage() {
     if (!url) return;
     const platform = getVideoUrlPlatform(url);
     if (!platform) {
-      setVideoUrlError("URL nao suportada. Use YouTube, TikTok, Instagram ou Vimeo.");
+      setVideoUrlError("URL não suportada. Use YouTube, TikTok, Instagram ou Vimeo.");
       return;
     }
     if (videoUrls.some((v) => v.url === url)) {
-      setVideoUrlError("Este video ja foi adicionado.");
+      setVideoUrlError("Este vídeo já foi adicionado.");
       return;
     }
     setVideoUrls((prev) => [...prev, { url, platform }]);
@@ -485,7 +485,7 @@ export default function EditarImovelPage() {
       !address.trim() ||
       !city.trim()
     ) {
-      setError("Preencha todos os campos obrigatorios.");
+      setError("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -539,13 +539,13 @@ export default function EditarImovelPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Erro ao salvar alteracoes.");
+        setError(data.error || "Erro ao salvar alterações.");
         return;
       }
 
       setSuccess(true);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro de conexao. Tente novamente.";
+      const message = err instanceof Error ? err.message : "Erro de conexão. Tente novamente.";
       setError(message);
     } finally {
       setSubmitting(false);
@@ -572,7 +572,7 @@ export default function EditarImovelPage() {
                 variant="outline"
                 className="w-full h-11 rounded-xl mt-4"
               >
-                Voltar para Meus Imoveis
+                Voltar para Meus Imóveis
               </Button>
             </Link>
           </div>
@@ -588,15 +588,15 @@ export default function EditarImovelPage() {
           <div className="rounded-xl border border-border/50 bg-card p-8 text-center space-y-4">
             <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto" />
             <h2 className="text-xl font-bold text-foreground">
-              Alteracoes salvas com sucesso!
+              Alterações salvas com sucesso!
             </h2>
             <p className="text-muted-foreground text-sm">
-              Seu imovel foi atualizado na plataforma.
+              Seu imóvel foi atualizado na plataforma.
             </p>
             <div className="flex flex-col gap-3 pt-2">
               <Link href={`/imoveis/${propertyId}`}>
                 <Button className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium rounded-xl">
-                  Ver Imovel
+                  Ver Imóvel
                 </Button>
               </Link>
               <Link href="/vender/meus-imoveis">
@@ -604,7 +604,7 @@ export default function EditarImovelPage() {
                   variant="outline"
                   className="w-full h-11 rounded-xl"
                 >
-                  Meus Imoveis
+                  Meus Imóveis
                 </Button>
               </Link>
             </div>
@@ -623,23 +623,23 @@ export default function EditarImovelPage() {
             <Home className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            Editar Imovel
+            Editar Imóvel
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Atualize as informacoes do seu imovel.
+            Atualize as informações do seu imóvel.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Section: Informacoes Basicas */}
+          {/* Section: Informações Básicas */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2">
-              Informacoes Basicas
+              Informações Básicas
             </h2>
 
             <div>
               <label className={labelClass}>
-                Titulo <span className="text-red-400">*</span>
+                Título <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -652,12 +652,12 @@ export default function EditarImovelPage() {
 
             <div>
               <label className={labelClass}>
-                Descricao <span className="text-red-400">*</span>
+                Descrição <span className="text-red-400">*</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva o imovel em detalhes..."
+                placeholder="Descreva o imóvel em detalhes..."
                 rows={4}
                 className={inputClass}
               />
@@ -684,7 +684,7 @@ export default function EditarImovelPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>
-                  Preco R$ <span className="text-red-400">*</span>
+                  Preço R$ <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -697,7 +697,7 @@ export default function EditarImovelPage() {
               </div>
               <div>
                 <label className={labelClass}>
-                  Area m2 <span className="text-red-400">*</span>
+                  Área m2 <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="number"
@@ -711,7 +711,7 @@ export default function EditarImovelPage() {
             </div>
           </div>
 
-          {/* Section: Localizacao */}
+          {/* Section: Localização */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2">
               Localizacao
@@ -725,7 +725,7 @@ export default function EditarImovelPage() {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Rua, numero"
+                placeholder="Rua, número"
                 className={inputClass}
               />
             </div>
@@ -739,7 +739,7 @@ export default function EditarImovelPage() {
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  placeholder="Ex: Sao Paulo"
+                  placeholder="Ex: São Paulo"
                   className={inputClass}
                 />
               </div>
@@ -798,11 +798,11 @@ export default function EditarImovelPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Suites</label>
+                  <label className={labelClass}>Suítes</label>
                   <input
                     type="number"
                     value={suites}
-                    onChange={(e) => setSuites(e.target.value)}
+                    onChange={(e) => setSuítes(e.target.value)}
                     placeholder="0"
                     min="0"
                     className={inputClass}
@@ -823,10 +823,10 @@ export default function EditarImovelPage() {
             </div>
           )}
 
-          {/* Section: Caracteristicas */}
+          {/* Section: Características */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2">
-              Caracteristicas
+              Características
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -874,11 +874,11 @@ export default function EditarImovelPage() {
             </div>
           </div>
 
-          {/* Section: Fotos e Videos */}
+          {/* Section: Fotos e Vídeos */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2 flex items-center gap-2">
               <ImageIcon className="w-4 h-4" />
-              Fotos e Videos
+              Fotos e Vídeos
             </h2>
 
             {/* Tab toggle */}
@@ -937,13 +937,13 @@ export default function EditarImovelPage() {
                     <Video className="w-8 h-8 text-emerald-500/60" />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Arraste fotos e videos aqui ou{" "}
+                    Arraste fotos e vídeos aqui ou{" "}
                     <span className="text-emerald-400 font-medium">
                       clique para selecionar
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground/60 mt-1">
-                    JPG, PNG, WebP, GIF, MP4, MOV, WebM - Maximo 10MB por arquivo
+                    JPG, PNG, WebP, GIF, MP4, MOV, WebM - Máximo 10MB por arquivo
                   </p>
                 </div>
 
@@ -1121,11 +1121,11 @@ export default function EditarImovelPage() {
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2 flex items-center gap-2">
               <Video className="w-4 h-4" />
-              Videos Externos (opcional)
+              Vídeos Externos (opcional)
             </h2>
 
             <p className="text-xs text-muted-foreground">
-              Cole URLs de videos do YouTube, TikTok, Instagram Reels ou Vimeo.
+              Cole URLs de vídeos do YouTube, TikTok, Instagram Reels ou Vimeo.
             </p>
 
             <div className="flex gap-2">
@@ -1142,7 +1142,7 @@ export default function EditarImovelPage() {
                     handleAddVideoUrl();
                   }
                 }}
-                placeholder="Cole a URL do video (YouTube, TikTok, Instagram...)"
+                placeholder="Cole a URL do vídeo (YouTube, TikTok, Instagram...)"
                 className={inputClass}
               />
               <Button
@@ -1213,7 +1213,7 @@ export default function EditarImovelPage() {
             {submitting ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              "Salvar Alteracoes"
+              "Salvar Alterações"
             )}
           </Button>
         </form>

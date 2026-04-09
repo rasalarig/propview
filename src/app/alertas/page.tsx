@@ -4,7 +4,7 @@ import { AlertsPageClient } from "@/components/alerts-page";
 export const metadata = {
   title: "Alertas de Busca | PropView",
   description:
-    "Crie alertas para ser notificado quando novos imoveis combinarem com o que voce procura",
+    "Crie alertas para ser notificado quando novos imóveis combinarem com o que você procura",
 };
 
 export default function AlertasPage() {

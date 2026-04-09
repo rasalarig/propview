@@ -415,9 +415,106 @@ function applyFilters(filters: SearchFilters, properties: Property[]): SearchRes
     });
 }
 
+// ─── Manual Filters (from UI filter panel) ───────────────────────────────────
+
+export interface ManualSearchFilters {
+  types?: string[];
+  min_price?: number | null;
+  max_price?: number | null;
+  min_area?: number | null;
+  max_area?: number | null;
+  min_bedrooms?: number | null;
+  min_bathrooms?: number | null;
+  min_parking?: number | null;
+  city?: string;
+  neighborhood?: string;
+  characteristics?: string[];
+  sort_by?: string;
+}
+
+function mergeManualFilters(
+  aiFilters: SearchFilters,
+  manual: ManualSearchFilters
+): SearchFilters {
+  const merged = { ...aiFilters };
+
+  // Manual filters override AI filters when set
+  if (manual.types && manual.types.length > 0) {
+    merged.type = manual.types.map((t) => t.toLowerCase());
+  }
+  if (manual.min_price !== undefined && manual.min_price !== null) {
+    merged.min_price = manual.min_price;
+  }
+  if (manual.max_price !== undefined && manual.max_price !== null) {
+    merged.max_price = manual.max_price;
+  }
+  if (manual.min_area !== undefined && manual.min_area !== null) {
+    merged.min_area = manual.min_area;
+  }
+  if (manual.max_area !== undefined && manual.max_area !== null) {
+    merged.max_area = manual.max_area;
+  }
+  if (manual.min_bedrooms !== undefined && manual.min_bedrooms !== null) {
+    merged.min_bedrooms = manual.min_bedrooms;
+  }
+  if (manual.min_bathrooms !== undefined && manual.min_bathrooms !== null) {
+    merged.min_bathrooms = manual.min_bathrooms;
+  }
+  if (manual.min_parking !== undefined && manual.min_parking !== null) {
+    merged.min_parking = manual.min_parking;
+  }
+  if (manual.city && manual.city.trim()) {
+    merged.city = manual.city.trim();
+  }
+  if (manual.neighborhood && manual.neighborhood.trim()) {
+    merged.neighborhood = manual.neighborhood.trim();
+  }
+  if (manual.characteristics && manual.characteristics.length > 0) {
+    // Merge: add manual characteristics to must_have (deduplicate)
+    const existing = new Set(merged.must_have.map((m) => m.toLowerCase()));
+    for (const char of manual.characteristics) {
+      if (!existing.has(char.toLowerCase())) {
+        merged.must_have.push(char.toLowerCase());
+      }
+    }
+  }
+  if (manual.sort_by && manual.sort_by !== "relevance") {
+    merged.sort_by = manual.sort_by as SearchFilters["sort_by"];
+  }
+
+  return merged;
+}
+
+function manualToSearchFilters(manual: ManualSearchFilters): SearchFilters {
+  return {
+    type:
+      manual.types && manual.types.length > 0
+        ? manual.types.map((t) => t.toLowerCase())
+        : null,
+    min_price: manual.min_price ?? null,
+    max_price: manual.max_price ?? null,
+    min_area: manual.min_area ?? null,
+    max_area: manual.max_area ?? null,
+    min_bedrooms: manual.min_bedrooms ?? null,
+    min_bathrooms: manual.min_bathrooms ?? null,
+    min_parking: manual.min_parking ?? null,
+    city: manual.city?.trim() || null,
+    neighborhood: manual.neighborhood?.trim() || null,
+    state: null,
+    must_have: (manual.characteristics || []).map((c) => c.toLowerCase()),
+    must_not_have: [],
+    keywords: [],
+    exclude_keywords: [],
+    sort_by: (manual.sort_by as SearchFilters["sort_by"]) || "relevance",
+  };
+}
+
 // ─── Main Search: Two-Step AI Search ─────────────────────────────────────────
 
-export async function openaiSearch(queryText: string): Promise<SearchResult[]> {
+export async function openaiSearch(
+  queryText: string,
+  manualOverrides?: ManualSearchFilters
+): Promise<SearchResult[]> {
   const properties = (await getAll(
     "SELECT * FROM properties WHERE status = 'active'"
   )) as Property[];
@@ -426,7 +523,13 @@ export async function openaiSearch(queryText: string): Promise<SearchResult[]> {
 
   try {
     // Step 1: AI generates structured filters
-    const filters = await aiGenerateFilters(queryText);
+    let filters = await aiGenerateFilters(queryText);
+
+    // Step 1.5: Merge manual overrides if provided
+    if (manualOverrides) {
+      filters = mergeManualFilters(filters, manualOverrides);
+      console.log("[Search] Merged manual overrides into AI filters");
+    }
 
     // Step 2: Apply filters to all properties
     const results = applyFilters(filters, properties);
@@ -437,6 +540,68 @@ export async function openaiSearch(queryText: string): Promise<SearchResult[]> {
     console.error("[Search] Two-step search failed, falling back to local:", error);
     return localSearch(queryText, properties);
   }
+}
+
+// ─── Filter-Only Search (no AI, just manual filters) ─────────────────────────
+
+export async function filterSearch(
+  manual: ManualSearchFilters,
+  keywordQuery?: string
+): Promise<SearchResult[]> {
+  const properties = (await getAll(
+    "SELECT * FROM properties WHERE status = 'active'"
+  )) as Property[];
+
+  if (properties.length === 0) return [];
+
+  const filters = manualToSearchFilters(manual);
+  console.log("[Search] Filter-only search:", JSON.stringify(filters));
+
+  let results = applyFilters(filters, properties);
+
+  // If there's a keyword query, boost properties matching the keywords
+  if (keywordQuery && keywordQuery.trim()) {
+    const queryNorm = normalize(keywordQuery);
+    const queryWords = queryNorm.split(/\s+/).filter((w) => w.length > 2);
+
+    if (queryWords.length > 0) {
+      results = results.map((r) => {
+        const searchText = normalize(
+          [
+            r.property.title,
+            r.property.description,
+            r.property.type,
+            r.property.address,
+            r.property.city,
+            r.property.neighborhood || "",
+          ].join(" ")
+        );
+
+        let bonus = 0;
+        for (const word of queryWords) {
+          if (searchText.includes(word)) {
+            bonus += 10;
+          }
+        }
+
+        return {
+          ...r,
+          score: r.score + bonus,
+          matchReasons: bonus > 0
+            ? [...r.matchReasons, "Corresponde por palavras-chave"]
+            : r.matchReasons,
+        };
+      });
+
+      // Re-sort if sorting by relevance
+      if (filters.sort_by === "relevance") {
+        results.sort((a, b) => b.score - a.score);
+      }
+    }
+  }
+
+  console.log("[Search] Filter results:", results.length, "out of", properties.length);
+  return results;
 }
 
 // ─── Fallback: Simple Keyword Search ─────────────────────────────────────────

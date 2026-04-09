@@ -16,7 +16,7 @@ const authedTabs = [
   { href: "/", icon: Film, label: "Reels" },
   { href: "/busca", icon: Search, label: "Busca IA" },
   { href: "/vender/leads", icon: Users, label: "Leads" },
-  { href: "/vender/meus-imoveis", icon: Home, label: "Meus Imoveis" },
+  { href: "/vender/meus-imoveis", icon: Home, label: "Meus Imóveis" },
   { href: "#profile", icon: User, label: "Perfil" },
 ];
 

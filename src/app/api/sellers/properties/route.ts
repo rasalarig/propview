@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: 'Nao autenticado' }, { status: 401 });
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
     const seller = await getOne(
@@ -17,7 +17,7 @@ export async function GET() {
     );
 
     if (!seller) {
-      return NextResponse.json({ error: 'Vendedor nao encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'Vendedor não encontrado' }, { status: 404 });
     }
 
     const properties = await getAll(

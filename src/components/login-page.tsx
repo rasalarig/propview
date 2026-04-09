@@ -30,7 +30,7 @@ export function LoginPage() {
     setError("");
 
     if (!email.trim() || !email.includes("@")) {
-      setError("Digite um email valido");
+      setError("Digite um email válido");
       return;
     }
 
@@ -104,8 +104,8 @@ export function LoginPage() {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {mode === "login"
-                ? "Acesse sua conta para gerenciar seus imoveis"
-                : "Cadastre-se para anunciar e gerenciar seus imoveis"}
+                ? "Acesse sua conta para gerenciar seus imóveis"
+                : "Cadastre-se para anunciar e gerenciar seus imóveis"}
             </p>
           </div>
         </CardHeader>
@@ -160,7 +160,7 @@ export function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder={mode === "register" ? "Minimo 6 caracteres" : "Sua senha"}
+                  placeholder={mode === "register" ? "Mínimo 6 caracteres" : "Sua senha"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 bg-background/50 border-border/50 focus-visible:ring-emerald-500/50"
@@ -196,7 +196,7 @@ export function LoginPage() {
           <div className="text-center">
             {mode === "login" ? (
               <p className="text-sm text-muted-foreground">
-                Nao tem conta?{" "}
+                Não tem conta?{" "}
                 <button
                   type="button"
                   onClick={() => { setMode("register"); setError(""); }}
@@ -207,7 +207,7 @@ export function LoginPage() {
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Ja tem conta?{" "}
+                Já tem conta?{" "}
                 <button
                   type="button"
                   onClick={() => { setMode("login"); setError(""); }}

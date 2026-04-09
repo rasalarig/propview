@@ -121,7 +121,7 @@ export default function CadastrarImovelPage() {
   // Details (casa/apartamento only)
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
-  const [suites, setSuites] = useState("");
+  const [suites, setSuítes] = useState("");
   const [parking, setParking] = useState("");
 
   // Characteristics
@@ -213,7 +213,7 @@ export default function CadastrarImovelPage() {
       const isVideo = ACCEPTED_VIDEO_TYPES.includes(file.type);
 
       if (!isImage && !isVideo) {
-        setError(`Tipo de arquivo nao permitido: ${file.name}`);
+        setError(`Tipo de arquivo não permitido: ${file.name}`);
         continue;
       }
 
@@ -303,11 +303,11 @@ export default function CadastrarImovelPage() {
     if (!url) return;
     const platform = getVideoUrlPlatform(url);
     if (!platform) {
-      setVideoUrlError("URL nao suportada. Use YouTube, TikTok, Instagram ou Vimeo.");
+      setVideoUrlError("URL não suportada. Use YouTube, TikTok, Instagram ou Vimeo.");
       return;
     }
     if (videoUrls.some((v) => v.url === url)) {
-      setVideoUrlError("Este video ja foi adicionado.");
+      setVideoUrlError("Este vídeo já foi adicionado.");
       return;
     }
     setVideoUrls((prev) => [...prev, { url, platform }]);
@@ -388,7 +388,7 @@ export default function CadastrarImovelPage() {
       !address.trim() ||
       !city.trim()
     ) {
-      setError("Preencha todos os campos obrigatorios.");
+      setError("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -442,13 +442,13 @@ export default function CadastrarImovelPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Erro ao cadastrar imovel.");
+        setError(data.error || "Erro ao cadastrar imóvel.");
         return;
       }
 
       setSuccess({ id: data.property.id });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro de conexao. Tente novamente.";
+      const message = err instanceof Error ? err.message : "Erro de conexão. Tente novamente.";
       setError(message);
     } finally {
       setSubmitting(false);
@@ -471,15 +471,15 @@ export default function CadastrarImovelPage() {
           <div className="rounded-xl border border-border/50 bg-card p-8 text-center space-y-4">
             <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto" />
             <h2 className="text-xl font-bold text-foreground">
-              Imovel cadastrado com sucesso!
+              Imóvel cadastrado com sucesso!
             </h2>
             <p className="text-muted-foreground text-sm">
-              Seu imovel ja esta visivel para compradores na plataforma.
+              Seu imóvel já está visível para compradores na plataforma.
             </p>
             <div className="flex flex-col gap-3 pt-2">
               <Link href={`/imoveis/${success.id}`}>
                 <Button className="w-full h-11 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium rounded-xl">
-                  Ver Imovel
+                  Ver Imóvel
                 </Button>
               </Link>
               <Link href="/vender/imovel">
@@ -495,7 +495,7 @@ export default function CadastrarImovelPage() {
                   variant="outline"
                   className="w-full h-11 rounded-xl"
                 >
-                  Meus Imoveis
+                  Meus Imóveis
                 </Button>
               </Link>
             </div>
@@ -514,23 +514,23 @@ export default function CadastrarImovelPage() {
             <Home className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            Cadastrar Imovel
+            Cadastrar Imóvel
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Preencha as informacoes do seu imovel para anuncia-lo na plataforma.
+            Preencha as informações do seu imóvel para anunciá-lo na plataforma.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Section: Informacoes Basicas */}
+          {/* Section: Informações Básicas */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2">
-              Informacoes Basicas
+              Informações Básicas
             </h2>
 
             <div>
               <label className={labelClass}>
-                Titulo <span className="text-red-400">*</span>
+                Título <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -543,12 +543,12 @@ export default function CadastrarImovelPage() {
 
             <div>
               <label className={labelClass}>
-                Descricao <span className="text-red-400">*</span>
+                Descrição <span className="text-red-400">*</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva o imovel em detalhes..."
+                placeholder="Descreva o imóvel em detalhes..."
                 rows={4}
                 className={inputClass}
               />
@@ -575,7 +575,7 @@ export default function CadastrarImovelPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>
-                  Preco R$ <span className="text-red-400">*</span>
+                  Preço R$ <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -588,7 +588,7 @@ export default function CadastrarImovelPage() {
               </div>
               <div>
                 <label className={labelClass}>
-                  Area m2 <span className="text-red-400">*</span>
+                  Área m2 <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="number"
@@ -602,21 +602,21 @@ export default function CadastrarImovelPage() {
             </div>
           </div>
 
-          {/* Section: Localizacao */}
+          {/* Section: Localização */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2">
-              Localizacao
+              Localização
             </h2>
 
             <div>
               <label className={labelClass}>
-                Endereco <span className="text-red-400">*</span>
+                Endereço <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Rua, numero"
+                placeholder="Rua, número"
                 className={inputClass}
               />
             </div>
@@ -630,7 +630,7 @@ export default function CadastrarImovelPage() {
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  placeholder="Ex: Sao Paulo"
+                  placeholder="Ex: São Paulo"
                   className={inputClass}
                 />
               </div>
@@ -689,11 +689,11 @@ export default function CadastrarImovelPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Suites</label>
+                  <label className={labelClass}>Suítes</label>
                   <input
                     type="number"
                     value={suites}
-                    onChange={(e) => setSuites(e.target.value)}
+                    onChange={(e) => setSuítes(e.target.value)}
                     placeholder="0"
                     min="0"
                     className={inputClass}
@@ -714,10 +714,10 @@ export default function CadastrarImovelPage() {
             </div>
           )}
 
-          {/* Section: Caracteristicas */}
+          {/* Section: Características */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2">
-              Caracteristicas
+              Características
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -765,11 +765,11 @@ export default function CadastrarImovelPage() {
             </div>
           </div>
 
-          {/* Section: Fotos e Videos */}
+          {/* Section: Fotos e Vídeos */}
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2 flex items-center gap-2">
               <ImageIcon className="w-4 h-4" />
-              Fotos e Videos
+              Fotos e Vídeos
             </h2>
 
             {/* Tab toggle */}
@@ -828,19 +828,19 @@ export default function CadastrarImovelPage() {
                     <Video className="w-8 h-8 text-emerald-500/60" />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    <span className="hidden md:inline">Arraste fotos e videos aqui ou{" "}
+                    <span className="hidden md:inline">Arraste fotos e vídeos aqui ou{" "}
                       <span className="text-emerald-400 font-medium">
                         clique para selecionar
                       </span>
                     </span>
                     <span className="md:hidden">
                       <span className="text-emerald-400 font-medium">
-                        Toque para selecionar fotos e videos da galeria
+                        Toque para selecionar fotos e vídeos da galeria
                       </span>
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground/60 mt-1">
-                    JPG, PNG, WebP, GIF, MP4, MOV, WebM - Maximo 10MB por arquivo
+                    JPG, PNG, WebP, GIF, MP4, MOV, WebM - Máximo 10MB por arquivo
                   </p>
                 </div>
 
@@ -925,7 +925,7 @@ export default function CadastrarImovelPage() {
                   <p className="text-xs text-muted-foreground">
                     {mediaEntries.length} arquivo(s) selecionado(s).{" "}
                     <span className="hidden md:inline">Passe o mouse sobre uma imagem para definir como capa ou remover.</span>
-                    <span className="md:hidden">Toque nos botoes sobre a imagem para definir capa ou remover.</span>
+                    <span className="md:hidden">Toque nos botões sobre a imagem para definir capa ou remover.</span>
                   </p>
                 )}
               </div>
@@ -1019,11 +1019,11 @@ export default function CadastrarImovelPage() {
           <div className="rounded-xl border border-border/50 bg-card p-6 space-y-4">
             <h2 className="text-base font-semibold text-foreground border-b border-border/30 pb-2 flex items-center gap-2">
               <Video className="w-4 h-4" />
-              Videos Externos (opcional)
+              Vídeos Externos (opcional)
             </h2>
 
             <p className="text-xs text-muted-foreground">
-              Cole URLs de videos do YouTube, TikTok, Instagram Reels ou Vimeo.
+              Cole URLs de vídeos do YouTube, TikTok, Instagram Reels ou Vimeo.
             </p>
 
             <div className="flex gap-2">
@@ -1040,7 +1040,7 @@ export default function CadastrarImovelPage() {
                     handleAddVideoUrl();
                   }
                 }}
-                placeholder="Cole a URL do video (YouTube, TikTok, Instagram...)"
+                placeholder="Cole a URL do vídeo (YouTube, TikTok, Instagram...)"
                 className={inputClass}
               />
               <Button
@@ -1111,7 +1111,7 @@ export default function CadastrarImovelPage() {
             {submitting ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              "Cadastrar Imovel"
+              "Cadastrar Imóvel"
             )}
           </Button>
         </form>

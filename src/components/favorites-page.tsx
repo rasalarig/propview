@@ -104,7 +104,7 @@ export function FavoritesPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Meus Favoritos</h1>
           {favorites.length > 0 && (
             <span className="text-sm text-muted-foreground">
-              ({favorites.length} {favorites.length === 1 ? "imovel" : "imoveis"})
+              ({favorites.length} {favorites.length === 1 ? "imóvel" : "imóveis"})
             </span>
           )}
         </div>
@@ -113,10 +113,10 @@ export function FavoritesPage() {
           <div className="text-center py-20">
             <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
             <h2 className="text-xl font-semibold mb-2 text-muted-foreground">
-              Voce ainda nao curtiu nenhum imovel.
+              Você ainda não curtiu nenhum imóvel.
             </h2>
             <p className="text-muted-foreground mb-6">
-              Explore os Reels e curta os imoveis que mais gostar!
+              Explore os Reels e curta os imóveis que mais gostar!
             </p>
             <Link
               href="/reels"

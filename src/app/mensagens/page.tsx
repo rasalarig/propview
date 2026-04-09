@@ -244,7 +244,7 @@ function MensagensContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
         <MessageCircle className="w-12 h-12 text-muted-foreground" />
-        <h1 className="text-xl font-semibold">Faca login para ver suas mensagens</h1>
+        <h1 className="text-xl font-semibold">Faça login para ver suas mensagens</h1>
         <Link
           href="/login"
           className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium transition-colors"
@@ -287,7 +287,7 @@ function MensagensContent() {
                 <MessageCircle className="w-10 h-10 text-muted-foreground mb-3" />
                 <p className="text-sm text-muted-foreground">Nenhuma conversa ainda</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Inicie uma conversa a partir de um imovel
+                  Inicie uma conversa a partir de um imóvel
                 </p>
               </div>
             ) : (
@@ -468,7 +468,7 @@ function MensagensContent() {
             <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
               <MessageCircle className="w-12 h-12 text-muted-foreground mb-3" />
               <p className="text-sm text-muted-foreground">
-                Selecione uma conversa para comecar
+                Selecione uma conversa para começar
               </p>
             </div>
           )}

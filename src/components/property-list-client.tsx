@@ -50,10 +50,10 @@ export function PropertyListClient({ properties }: PropertyListClientProps) {
 
   const sortOptions: { value: SortOption; label: string }[] = [
     { value: "recent", label: "Mais Recentes" },
-    { value: "price_asc", label: "Menor Preco" },
-    { value: "price_desc", label: "Maior Preco" },
-    { value: "area_asc", label: "Menor Area" },
-    { value: "area_desc", label: "Maior Area" },
+    { value: "price_asc", label: "Menor Preço" },
+    { value: "price_desc", label: "Maior Preço" },
+    { value: "area_asc", label: "Menor Área" },
+    { value: "area_desc", label: "Maior Área" },
   ];
 
   return (
@@ -61,9 +61,9 @@ export function PropertyListClient({ properties }: PropertyListClientProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Imoveis Disponiveis</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Imóveis Disponíveis</h1>
           <p className="text-muted-foreground mt-1">
-            {properties.length} {properties.length === 1 ? "imovel encontrado" : "imoveis encontrados"}
+            {properties.length} {properties.length === 1 ? "imóvel encontrado" : "imóveis encontrados"}
           </p>
         </div>
 
@@ -110,9 +110,9 @@ export function PropertyListClient({ properties }: PropertyListClientProps) {
       {/* Property Grid/List */}
       {sortedProperties.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-muted-foreground text-lg">Nenhum imovel disponivel no momento.</p>
+          <p className="text-muted-foreground text-lg">Nenhum imóvel disponível no momento.</p>
           <Link href="/admin/cadastro">
-            <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600">Cadastrar Imovel</Button>
+            <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600">Cadastrar Imóvel</Button>
           </Link>
         </div>
       ) : (

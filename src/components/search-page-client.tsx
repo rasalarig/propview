@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +11,15 @@ import {
   Brain,
   Cpu,
   ArrowLeft,
+  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  SearchFiltersPanel,
+  type ManualFilters,
+  getEmptyManualFilters,
+  countActiveFilters,
+} from "@/components/search-filters-panel";
 
 interface SearchResult {
   id: number;
@@ -33,7 +40,7 @@ interface SearchResult {
 interface SearchResponse {
   results: SearchResult[];
   query: string;
-  mode: "openai" | "claude" | "ai" | "local" | "empty" | "error";
+  mode: "openai" | "claude" | "ai" | "ai_filters" | "local" | "filters" | "empty" | "error";
   total: number;
 }
 
@@ -47,27 +54,67 @@ export function SearchPageClient() {
   const [loading, setLoading] = useState(false);
   const [searchMode, setSearchMode] = useState<string>("");
   const [searched, setSearched] = useState(false);
+  const [filters, setFilters] = useState<ManualFilters>(getEmptyManualFilters());
 
-  const doSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) return;
+  const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
 
-    setLoading(true);
-    setSearched(true);
+  const doSearch = useCallback(
+    async (searchQuery: string, manualFilters?: ManualFilters) => {
+      const filtersToUse = manualFilters || filters;
+      const hasFilters = countActiveFilters(filtersToUse) > 0;
+      const hasQuery = searchQuery.trim().length > 0;
 
-    try {
-      const res = await fetch(
-        `/api/search?q=${encodeURIComponent(searchQuery)}`
-      );
-      const data: SearchResponse = await res.json();
-      setResults(data.results);
-      setSearchMode(data.mode);
-    } catch {
-      setResults([]);
-      setSearchMode("error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      if (!hasQuery && !hasFilters) return;
+
+      setLoading(true);
+      setSearched(true);
+
+      try {
+        let data: SearchResponse;
+
+        if (hasFilters) {
+          // Use POST when we have manual filters
+          const res = await fetch("/api/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: searchQuery,
+              filters: {
+                types: filtersToUse.types,
+                min_price: filtersToUse.min_price,
+                max_price: filtersToUse.max_price,
+                min_area: filtersToUse.min_area,
+                max_area: filtersToUse.max_area,
+                min_bedrooms: filtersToUse.min_bedrooms,
+                min_bathrooms: filtersToUse.min_bathrooms,
+                min_parking: filtersToUse.min_parking,
+                city: filtersToUse.city,
+                neighborhood: filtersToUse.neighborhood,
+                characteristics: filtersToUse.characteristics,
+                sort_by: filtersToUse.sort_by,
+              },
+            }),
+          });
+          data = await res.json();
+        } else {
+          // Simple GET for text-only search
+          const res = await fetch(
+            `/api/search?q=${encodeURIComponent(searchQuery)}`
+          );
+          data = await res.json();
+        }
+
+        setResults(data.results);
+        setSearchMode(data.mode);
+      } catch {
+        setResults([]);
+        setSearchMode("error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters]
+  );
 
   useEffect(() => {
     if (initialQuery) {
@@ -77,12 +124,21 @@ export function SearchPageClient() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/busca?q=${encodeURIComponent(query.trim())}`, {
-        scroll: false,
-      });
-      doSearch(query.trim());
+    const trimmed = query.trim();
+    if (trimmed || countActiveFilters(filters) > 0) {
+      if (trimmed) {
+        router.push(`/busca?q=${encodeURIComponent(trimmed)}`, {
+          scroll: false,
+        });
+      }
+      doSearch(trimmed);
     }
+  };
+
+  const handleApplyFilters = (newFilters: ManualFilters) => {
+    setFilters(newFilters);
+    // Trigger a search with the new filters
+    doSearch(query.trim(), newFilters);
   };
 
   const suggestions = [
@@ -103,7 +159,7 @@ export function SearchPageClient() {
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Voltar ao inicio
+          Voltar ao início
         </Link>
 
         {/* Search Header */}
@@ -112,7 +168,7 @@ export function SearchPageClient() {
             Busca <span className="text-emerald-400">Inteligente</span>
           </h1>
           <p className="text-muted-foreground">
-            Descreva o imovel ideal em suas proprias palavras
+            Descreva o imóvel ideal em suas próprias palavras
           </p>
         </div>
 
@@ -132,12 +188,18 @@ export function SearchPageClient() {
                       handleSearch(e);
                     }
                   }}
-                  placeholder="Descreva o imovel que voce procura..."
+                  placeholder="Descreva o imóvel que você procura..."
                   rows={3}
                   className="flex-1 bg-transparent px-4 py-4 text-base outline-none placeholder:text-muted-foreground/60 resize-none"
                 />
               </div>
-              <div className="flex justify-end px-2 pb-2">
+              <div className="flex items-center justify-between px-2 pb-2 gap-2">
+                <div className="pl-2">
+                  <SearchFiltersPanel
+                    filters={filters}
+                    onApply={handleApplyFilters}
+                  />
+                </div>
                 <Button
                   type="submit"
                   disabled={loading}
@@ -157,10 +219,85 @@ export function SearchPageClient() {
           </div>
         </form>
 
+        {/* Active filters summary */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6 max-w-3xl mx-auto">
+            <span className="text-xs text-muted-foreground">Filtros ativos:</span>
+            {filters.types.length > 0 && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.types.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(", ")}
+              </Badge>
+            )}
+            {(filters.min_price !== null || filters.max_price !== null) && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.min_price !== null && filters.max_price !== null
+                  ? `R$ ${filters.min_price.toLocaleString("pt-BR")} - R$ ${filters.max_price.toLocaleString("pt-BR")}`
+                  : filters.min_price !== null
+                  ? `A partir de R$ ${filters.min_price.toLocaleString("pt-BR")}`
+                  : `Ate R$ ${filters.max_price!.toLocaleString("pt-BR")}`}
+              </Badge>
+            )}
+            {(filters.min_area !== null || filters.max_area !== null) && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.min_area !== null && filters.max_area !== null
+                  ? `${filters.min_area} - ${filters.max_area} m2`
+                  : filters.min_area !== null
+                  ? `A partir de ${filters.min_area} m2`
+                  : `Ate ${filters.max_area} m2`}
+              </Badge>
+            )}
+            {filters.min_bedrooms !== null && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.min_bedrooms}+ quartos
+              </Badge>
+            )}
+            {filters.min_bathrooms !== null && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.min_bathrooms}+ banheiros
+              </Badge>
+            )}
+            {filters.min_parking !== null && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.min_parking}+ vagas
+              </Badge>
+            )}
+            {filters.city && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.city}
+              </Badge>
+            )}
+            {filters.neighborhood && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.neighborhood}
+              </Badge>
+            )}
+            {filters.characteristics.length > 0 && (
+              <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                {filters.characteristics.length} característica{filters.characteristics.length > 1 ? "s" : ""}
+              </Badge>
+            )}
+            <button
+              onClick={() => {
+                const empty = getEmptyManualFilters();
+                setFilters(empty);
+                if (query.trim()) {
+                  doSearch(query.trim(), empty);
+                } else {
+                  setResults([]);
+                  setSearched(false);
+                }
+              }}
+              className="text-xs text-muted-foreground hover:text-red-400 transition-colors underline"
+            >
+              Limpar todos
+            </button>
+          </div>
+        )}
+
         {/* Suggestion chips */}
         {!searched && (
           <div className="flex flex-wrap justify-center gap-2 mb-12">
-            <span className="text-xs text-muted-foreground">Sugestoes:</span>
+            <span className="text-xs text-muted-foreground">Sugestões:</span>
             {suggestions.map((s) => (
               <button
                 key={s}
@@ -202,9 +339,13 @@ export function SearchPageClient() {
                   <>
                     <Brain className="w-3 h-3" /> Busca por GPT
                   </>
-                ) : searchMode === "claude" || searchMode === "ai" ? (
+                ) : searchMode === "claude" || searchMode === "ai" || searchMode === "ai_filters" ? (
                   <>
-                    <Brain className="w-3 h-3" /> Busca por Claude
+                    <Brain className="w-3 h-3" /> Busca por IA
+                  </>
+                ) : searchMode === "filters" ? (
+                  <>
+                    <SlidersHorizontal className="w-3 h-3" /> Filtros manuais
                   </>
                 ) : (
                   <>
@@ -221,7 +362,7 @@ export function SearchPageClient() {
                   Nenhum resultado encontrado
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Tente descrever de outra forma ou use termos mais gerais.
+                  Tente descrever de outra forma ou ajuste os filtros.
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {suggestions.slice(0, 3).map((s) => (

@@ -31,7 +31,7 @@ export default function PropertyMap({
   if (!latitude || !longitude) {
     return (
       <div className="h-64 rounded-xl border border-border/50 bg-card flex items-center justify-center text-muted-foreground">
-        <p className="text-sm">Localizacao nao disponivel</p>
+        <p className="text-sm">Localização não disponível</p>
       </div>
     );
   }

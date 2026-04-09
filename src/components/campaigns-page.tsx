@@ -146,7 +146,7 @@ export function CampaignsPage() {
       if (res.ok) {
         const data = await res.json();
         setSuccessMsg(
-          `Campanha criada com sucesso! ${data.recipients_count} destinatarios adicionados.`
+          `Campanha criada com sucesso! ${data.recipients_count} destinatários adicionados.`
         );
         setTitle("");
         setMessage("");
@@ -159,7 +159,7 @@ export function CampaignsPage() {
         setErrorMsg(err.error || "Erro ao criar campanha");
       }
     } catch {
-      setErrorMsg("Erro de conexao. Tente novamente.");
+      setErrorMsg("Erro de conexão. Tente novamente.");
     } finally {
       setCreating(false);
     }
@@ -214,9 +214,9 @@ export function CampaignsPage() {
 
               <div className="space-y-4 py-2">
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Titulo</label>
+                  <label className="text-sm font-medium mb-1.5 block">Título</label>
                   <Input
-                    placeholder="Ex: Promocao de Verao"
+                    placeholder="Ex: Promoção de Verão"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
@@ -268,16 +268,16 @@ export function CampaignsPage() {
 
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">
-                    ID do Imovel (opcional)
+                    ID do Imóvel (opcional)
                   </label>
                   <Input
                     type="number"
-                    placeholder="Filtrar por imovel especifico"
+                    placeholder="Filtrar por imóvel específico"
                     value={propertyId}
                     onChange={(e) => setPropertyId(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Deixe em branco para todos os imoveis.
+                    Deixe em branco para todos os imóveis.
                   </p>
                 </div>
               </div>
@@ -318,7 +318,7 @@ export function CampaignsPage() {
         <Card className="p-12 text-center bg-card border-border/50">
           <Megaphone className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
           <p className="text-muted-foreground">
-            Nenhuma campanha criada ainda. Clique em &quot;Nova Campanha&quot; para comecar.
+            Nenhuma campanha criada ainda. Clique em &quot;Nova Campanha&quot; para começar.
           </p>
         </Card>
       ) : (
@@ -351,7 +351,7 @@ export function CampaignsPage() {
 
                 {campaign.property_title && (
                   <p className="text-xs text-muted-foreground mb-3">
-                    Imovel: <span className="text-emerald-400">{campaign.property_title}</span>
+                    Imóvel: <span className="text-emerald-400">{campaign.property_title}</span>
                   </p>
                 )}
 
@@ -359,7 +359,7 @@ export function CampaignsPage() {
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Users className="w-4 h-4" />
                     <span>
-                      {recipients} destinatario{recipients !== 1 ? "s" : ""}
+                      {recipients} destinatário{recipients !== 1 ? "s" : ""}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-muted-foreground">

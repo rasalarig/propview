@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
-        { error: 'Voce precisa estar logado para cadastrar um imovel' },
+        { error: 'Você precisa estar logado para cadastrar um imóvel' },
         { status: 401 }
       );
     }
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (!seller) {
       return NextResponse.json(
-        { error: 'Vendedor nao encontrado. Faca login novamente.' },
+        { error: 'Vendedor não encontrado. Faça login novamente.' },
         { status: 404 }
       );
     }
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     if (!title || !description || !price || !area || !type || !address || !city) {
       return NextResponse.json(
-        { error: 'Campos obrigatorios faltando' },
+        { error: 'Campos obrigatórios faltando' },
         { status: 400 }
       );
     }
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating property:', error);
     return NextResponse.json(
-      { error: 'Falha ao cadastrar imovel' },
+      { error: 'Falha ao cadastrar imóvel' },
       { status: 500 }
     );
   }

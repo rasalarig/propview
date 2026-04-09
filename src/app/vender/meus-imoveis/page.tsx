@@ -135,7 +135,7 @@ export default function MeusImoveisPage() {
   };
 
   const deleteProperty = async (propertyId: number) => {
-    if (!confirm("Tem certeza que deseja excluir este imovel? Esta acao nao pode ser desfeita.")) {
+    if (!confirm("Tem certeza que deseja excluir este imóvel? Esta ação não pode ser desfeita.")) {
       return;
     }
     setDeletingId(propertyId);
@@ -183,15 +183,15 @@ export default function MeusImoveisPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Meus Imoveis</h1>
+            <h1 className="text-2xl font-bold text-foreground">Meus Imóveis</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Gerencie seus imoveis anunciados
+              Gerencie seus imóveis anunciados
             </p>
           </div>
           <Link href="/vender/imovel">
             <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl">
               <Plus className="w-4 h-4 mr-2" />
-              Cadastrar Novo Imovel
+              Cadastrar Novo Imóvel
             </Button>
           </Link>
         </div>
@@ -223,15 +223,15 @@ export default function MeusImoveisPage() {
               <Home className="w-10 h-10 text-emerald-500" />
             </div>
             <h2 className="text-lg font-semibold text-foreground mb-2">
-              Nenhum imovel cadastrado
+              Nenhum imóvel cadastrado
             </h2>
             <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-              Voce ainda nao possui imoveis cadastrados. Comece agora e alcance milhares de compradores.
+              Você ainda não possui imóveis cadastrados. Comece agora e alcance milhares de compradores.
             </p>
             <Link href="/vender/imovel">
               <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
-                Cadastrar Primeiro Imovel
+                Cadastrar Primeiro Imóvel
               </Button>
             </Link>
           </div>
@@ -308,7 +308,7 @@ export default function MeusImoveisPage() {
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="inline-flex items-center gap-1.5">
                         <Eye className="w-3.5 h-3.5" />
-                        {property.engagement_count} visualizacoes
+                        {property.engagement_count} visualizações
                       </span>
                       <Link
                         href={`/vender/leads?property=${property.id}`}
@@ -429,7 +429,7 @@ export default function MeusImoveisPage() {
               <div>
                 <p className="font-semibold text-foreground">Ver Leads & Interessados</p>
                 <p className="text-sm text-muted-foreground">
-                  Acompanhe quem esta interessado nos seus imoveis
+                  Acompanhe quem está interessado nos seus imóveis
                 </p>
               </div>
             </div>

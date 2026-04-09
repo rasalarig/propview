@@ -53,12 +53,12 @@ export async function POST(request: NextRequest) {
     const { property_id, name, phone, email, message, source = "form" } = body;
 
     if (!property_id || !name || !phone) {
-      return NextResponse.json({ error: "Nome e telefone sao obrigatorios" }, { status: 400 });
+      return NextResponse.json({ error: "Nome e telefone são obrigatórios" }, { status: 400 });
     }
 
     const property = await getOne("SELECT id, title FROM properties WHERE id = $1", [property_id]);
     if (!property) {
-      return NextResponse.json({ error: "Imovel nao encontrado" }, { status: 404 });
+      return NextResponse.json({ error: "Imóvel não encontrado" }, { status: 404 });
     }
 
     const result = await getOne(

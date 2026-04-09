@@ -4,8 +4,8 @@ import { getAll, getOne } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Imoveis Disponiveis | PropView",
-  description: "Veja todos os imoveis disponiveis para compra",
+  title: "Imóveis Disponíveis | PropView",
+  description: "Veja todos os imóveis disponíveis para compra",
 };
 
 interface Property {

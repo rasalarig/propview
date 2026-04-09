@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Meus Favoritos | PropView",
-  description: "Veja os imoveis que voce curtiu",
+  description: "Veja os imóveis que você curtiu",
 };
 
 export default function FavoritosPage() {

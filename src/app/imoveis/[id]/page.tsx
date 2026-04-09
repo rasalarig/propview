@@ -53,7 +53,7 @@ export async function generateMetadata({
   params: { id: string };
 }) {
   const property = await getProperty(params.id);
-  if (!property) return { title: "Imovel nao encontrado" };
+  if (!property) return { title: "Imóvel não encontrado" };
 
   return {
     title: `${property.title} | PropView`,

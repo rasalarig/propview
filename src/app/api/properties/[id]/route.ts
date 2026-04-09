@@ -49,12 +49,12 @@ export async function GET(
 async function verifyOwnership(propertyId: string): Promise<{ error?: NextResponse; sellerId?: number }> {
   const user = await getCurrentUser();
   if (!user) {
-    return { error: NextResponse.json({ error: 'Nao autenticado' }, { status: 401 }) };
+    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) };
   }
 
   const seller = await getOne('SELECT id FROM sellers WHERE user_id = $1', [user.id]);
   if (!seller) {
-    return { error: NextResponse.json({ error: 'Vendedor nao encontrado' }, { status: 404 }) };
+    return { error: NextResponse.json({ error: 'Vendedor não encontrado' }, { status: 404 }) };
   }
 
   const property = await getOne(
@@ -63,11 +63,11 @@ async function verifyOwnership(propertyId: string): Promise<{ error?: NextRespon
   );
 
   if (!property) {
-    return { error: NextResponse.json({ error: 'Imovel nao encontrado' }, { status: 404 }) };
+    return { error: NextResponse.json({ error: 'Imóvel não encontrado' }, { status: 404 }) };
   }
 
   if (property.seller_id !== seller.id) {
-    return { error: NextResponse.json({ error: 'Voce nao tem permissao para modificar este imovel' }, { status: 403 }) };
+    return { error: NextResponse.json({ error: 'Você não tem permissão para modificar este imóvel' }, { status: 403 }) };
   }
 
   return { sellerId: seller.id };
@@ -213,7 +213,7 @@ export async function DELETE(
 
     await query('DELETE FROM properties WHERE id = $1', [params.id]);
 
-    return NextResponse.json({ message: 'Imovel excluido com sucesso' });
+    return NextResponse.json({ message: 'Imóvel excluído com sucesso' });
   } catch (error) {
     console.error('Error deleting property:', error);
     return NextResponse.json(

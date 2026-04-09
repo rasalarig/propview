@@ -91,7 +91,7 @@ export function Navbar() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
           <Link href="/imoveis" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Imoveis
+            Imóveis
           </Link>
           <Link href="/busca" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
             <Search className="w-3.5 h-3.5" />
@@ -128,7 +128,7 @@ export function Navbar() {
               </Link>
               <Link href="/vender/meus-imoveis" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                 <Home className="w-3.5 h-3.5" />
-                Meus Imoveis
+                Meus Imóveis
               </Link>
               <Link href="/vender/leads" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
@@ -137,7 +137,7 @@ export function Navbar() {
               <Link href="/vender/imovel">
                 <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white">
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  Cadastrar Imovel
+                  Cadastrar Imóvel
                 </Button>
               </Link>
             </>
@@ -188,7 +188,7 @@ export function Navbar() {
                         className="block px-3 py-2 text-sm text-muted-foreground hover:bg-accent/50 transition-colors"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        Meus Imoveis
+                        Meus Imóveis
                       </Link>
                       <Link
                         href="/vender/leads"
@@ -229,7 +229,7 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
-            <Link href="/imoveis" className="text-sm py-2" onClick={() => setMobileOpen(false)}>Imoveis</Link>
+            <Link href="/imoveis" className="text-sm py-2" onClick={() => setMobileOpen(false)}>Imóveis</Link>
             <Link href="/busca" className="text-sm py-2" onClick={() => setMobileOpen(false)}>Busca IA</Link>
 
             {!loading && user && (
@@ -259,13 +259,13 @@ export function Navbar() {
                 </Link>
                 <div className="border-t border-border/40 my-1" />
                 <Link href="/vender/meus-imoveis" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                  <Home className="w-3.5 h-3.5" /> Meus Imoveis
+                  <Home className="w-3.5 h-3.5" /> Meus Imóveis
                 </Link>
                 <Link href="/vender/leads" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
                   <Users className="w-3.5 h-3.5" /> Leads
                 </Link>
                 <Link href="/vender/imovel" className="text-sm py-2 flex items-center gap-2 text-emerald-500 font-medium" onClick={() => setMobileOpen(false)}>
-                  <Plus className="w-3.5 h-3.5" /> Cadastrar Imovel
+                  <Plus className="w-3.5 h-3.5" /> Cadastrar Imóvel
                 </Link>
               </>
             )}

@@ -414,7 +414,7 @@ export function AlertsPageClient() {
             Alertas de Busca
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Receba notificacoes quando novos imoveis combinarem com o que voce
+            Receba notificações quando novos imóveis combinarem com o que você
             procura.
           </p>
         </div>
@@ -427,7 +427,7 @@ export function AlertsPageClient() {
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Ex: terreno com arvores ate 200mil"
+                placeholder="Ex: terreno com árvores até 200mil"
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-card border border-border/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/25 outline-none text-sm transition-colors placeholder:text-muted-foreground/60"
               />
             </div>

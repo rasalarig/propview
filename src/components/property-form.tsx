@@ -177,7 +177,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Erro ao salvar imovel");
+        throw new Error(data.error || "Erro ao salvar imóvel");
       }
 
       const data = await res.json();
@@ -199,7 +199,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       }, 1500);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Erro ao salvar imovel";
+        err instanceof Error ? err.message : "Erro ao salvar imóvel";
       setError(message);
     } finally {
       setLoading(false);
@@ -238,7 +238,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
       <Card className="p-12 text-center bg-card border-border/50">
         <CheckCircle className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
         <h2 className="text-xl font-bold mb-2">
-          Imovel {isEditing ? "atualizado" : "cadastrado"} com sucesso!
+          Imóvel {isEditing ? "atualizado" : "cadastrado"} com sucesso!
         </h2>
         <p className="text-muted-foreground">Redirecionando para a lista...</p>
       </Card>
@@ -255,16 +255,16 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
 
       {/* Basic Info */}
       <Card className="p-6 bg-card border-border/50 space-y-4">
-        <h2 className="text-lg font-semibold">Informacoes Basicas</h2>
+        <h2 className="text-lg font-semibold">Informações Básicas</h2>
 
         <div>
           <label className="text-sm text-muted-foreground mb-1 block">
-            Titulo *
+            Título *
           </label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Terreno 300m2 em Condominio Fechado - Itapetininga"
+            placeholder="Ex: Terreno 300m2 em Condomínio Fechado - Itapetininga"
             required
             className="bg-secondary/50 border-border/50"
           />
@@ -272,26 +272,26 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
 
         <div>
           <label className="text-sm text-muted-foreground mb-1 block">
-            Descricao Detalhada *
+            Descrição Detalhada *
           </label>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descreva o imovel em detalhes. Mencione tudo que for relevante: vizinhanca, infraestrutura, vegetacao, vista, proximidades... Quanto mais detalhes, melhor a busca por IA encontrara este imovel."
+            placeholder="Descreva o imóvel em detalhes. Mencione tudo que for relevante: vizinhança, infraestrutura, vegetação, vista, proximidades... Quanto mais detalhes, melhor a busca por IA encontrará este imóvel."
             required
             rows={6}
             className="bg-secondary/50 border-border/50"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Dica: Seja detalhista! A IA usa esta descricao para encontrar o
-            imovel.
+            Dica: Seja detalhista! A IA usa esta descrição para encontrar o
+            imóvel.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">
-              Preco (R$) *
+              Preço (R$) *
             </label>
             <Input
               type="number"
@@ -306,7 +306,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           </div>
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">
-              Area (m2) *
+              Área (m2) *
             </label>
             <Input
               type="number"
@@ -341,11 +341,11 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
 
       {/* Location */}
       <Card className="p-6 bg-card border-border/50 space-y-4">
-        <h2 className="text-lg font-semibold">Localizacao</h2>
+        <h2 className="text-lg font-semibold">Localização</h2>
 
         <div>
           <label className="text-sm text-muted-foreground mb-1 block">
-            Endereco *
+            Endereço *
           </label>
           <Input
             value={address}
@@ -410,10 +410,10 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Tag className="w-4 h-4 text-emerald-400" />
-            Caracteristicas
+            Características
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Adicione tags que descrevam o imovel. Essas tags alimentam a busca
+            Adicione tags que descrevam o imóvel. Essas tags alimentam a busca
             por IA.
           </p>
         </div>
@@ -424,7 +424,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyDown={handleTagKeyDown}
-            placeholder="Digite uma caracteristica e pressione Enter"
+            placeholder="Digite uma característica e pressione Enter"
             className="bg-secondary/50 border-border/50"
           />
           <Button
@@ -462,7 +462,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         {suggestedTags.length > 0 && (
           <div>
             <p className="text-xs text-muted-foreground mb-2">
-              Sugestoes (clique para adicionar):
+              Sugestões (clique para adicionar):
             </p>
             <div className="flex flex-wrap gap-1.5">
               {suggestedTags.slice(0, 12).map((tag) => (
@@ -484,7 +484,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
 
       {/* Details */}
       <Card className="p-6 bg-card border-border/50 space-y-4">
-        <h2 className="text-lg font-semibold">Detalhes do Imovel</h2>
+        <h2 className="text-lg font-semibold">Detalhes do Imóvel</h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
@@ -542,7 +542,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
               onChange={(e) => setGatedCommunity(e.target.checked)}
               className="w-4 h-4 rounded border-border accent-emerald-500"
             />
-            <span className="text-sm">Condominio Fechado</span>
+            <span className="text-sm">Condomínio Fechado</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -618,7 +618,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           ) : (
             <Save className="w-4 h-4 mr-2" />
           )}
-          {isEditing ? "Atualizar Imovel" : "Cadastrar Imovel"}
+          {isEditing ? "Atualizar Imóvel" : "Cadastrar Imóvel"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancelar

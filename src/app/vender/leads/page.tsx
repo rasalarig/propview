@@ -73,12 +73,12 @@ function formatRelativeDate(dateStr: string): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffMinutes < 1) return "agora";
-  if (diffMinutes < 60) return `ha ${diffMinutes} min`;
-  if (diffHours < 24) return `ha ${diffHours}h`;
-  if (diffDays === 1) return "ha 1 dia";
-  if (diffDays < 30) return `ha ${diffDays} dias`;
-  if (diffDays < 365) return `ha ${Math.floor(diffDays / 30)} meses`;
-  return `ha ${Math.floor(diffDays / 365)} anos`;
+  if (diffMinutes < 60) return `há ${diffMinutes} min`;
+  if (diffHours < 24) return `há ${diffHours}h`;
+  if (diffDays === 1) return "há 1 dia";
+  if (diffDays < 30) return `há ${diffDays} dias`;
+  if (diffDays < 365) return `há ${Math.floor(diffDays / 30)} meses`;
+  return `há ${Math.floor(diffDays / 365)} anos`;
 }
 
 const scoreWeights: Record<string, number> = {
@@ -265,7 +265,7 @@ function LeadsPageContent() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
-          Voltar para Meus Imoveis
+          Voltar para Meus Imóveis
         </Link>
 
         {/* Header */}
@@ -276,7 +276,7 @@ function LeadsPageContent() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Leads & Interessados</h1>
             <p className="text-sm text-muted-foreground">
-              {interestedStats.total} {interestedStats.total === 1 ? "pessoa" : "pessoas"} interagiram com seus imoveis
+              {interestedStats.total} {interestedStats.total === 1 ? "pessoa" : "pessoas"} interagiram com seus imóveis
             </p>
           </div>
         </div>
@@ -333,7 +333,7 @@ function LeadsPageContent() {
                 }}
                 className="appearance-none rounded-lg border border-border/50 bg-card text-foreground text-xs px-3 py-2 pr-8 cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
               >
-                <option value="">Todos os imoveis</option>
+                <option value="">Todos os imóveis</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title}
@@ -355,7 +355,7 @@ function LeadsPageContent() {
               Nenhum interessado encontrado
             </h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Quando usuarios interagirem com seus imoveis, eles aparecerao aqui com uma pontuacao de interesse.
+              Quando usuários interagirem com seus imóveis, eles aparecerão aqui com uma pontuação de interesse.
             </p>
           </div>
         ) : (
@@ -404,7 +404,7 @@ function LeadsPageContent() {
                           <Flame className={`w-3 h-3 ${tempCfg.iconColor}`} />
                           {tempCfg.label}
                         </button>
-                        <span className="text-xs font-bold text-muted-foreground" title="Pontuacao de interesse baseada nas interacoes">
+                        <span className="text-xs font-bold text-muted-foreground" title="Pontuação de interesse baseada nas interações">
                           {item.score} pts
                         </span>
                       </div>
