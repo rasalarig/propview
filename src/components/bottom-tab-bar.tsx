@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Film, Search, Heart, Home, User, MessageCircle, LogOut } from "lucide-react";
+import { Film, Search, Heart, Home, User, Users, MessageCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useState, useEffect, useRef } from "react";
 
@@ -15,8 +15,8 @@ const publicTabs = [
 const authedTabs = [
   { href: "/", icon: Film, label: "Reels" },
   { href: "/busca", icon: Search, label: "Busca IA" },
+  { href: "/vender/leads", icon: Users, label: "Leads" },
   { href: "/vender/meus-imoveis", icon: Home, label: "Meus Imoveis" },
-  { href: "/favoritos", icon: Heart, label: "Favoritos" },
   { href: "#profile", icon: User, label: "Perfil" },
 ];
 
