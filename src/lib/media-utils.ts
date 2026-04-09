@@ -3,7 +3,7 @@ const VIDEO_EXTENSIONS = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
 const EXTERNAL_VIDEO_PATTERNS = [
   /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)/i,
   /tiktok\.com/i,
-  /instagram\.com\/(?:reel|p)\//i,
+  /instagram\.com\/(?:reels?|p)\//i,
   /vimeo\.com\/\d+/i,
 ];
 
