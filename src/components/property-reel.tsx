@@ -268,7 +268,7 @@ export function PropertyReel({
 
       {/* Dot indicators - TikTok style, top area */}
       {hasMultipleImages && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
+        <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
           {imageUrls.map((_, index) => (
             <button
               key={index}
