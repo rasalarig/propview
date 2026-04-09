@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Crown } from "lucide-react";
 
 export function Footer() {
   return (
@@ -20,6 +21,10 @@ export function Footer() {
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/imoveis" className="hover:text-foreground transition-colors">Imóveis</Link>
             <Link href="/busca" className="hover:text-foreground transition-colors">Busca IA</Link>
+            <Link href="/premium" className="hover:text-amber-400 transition-colors text-amber-500 flex items-center gap-1">
+              <Crown className="w-3 h-3" />
+              Premium
+            </Link>
             <Link href="/admin" className="hover:text-foreground transition-colors">Admin</Link>
           </div>
           <p className="text-xs text-muted-foreground">

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle, Users } from "lucide-react";
+import { SlidersHorizontal, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle, Users, Crown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 
@@ -97,6 +97,10 @@ export function Navbar() {
             <SlidersHorizontal className="w-3.5 h-3.5" />
             Filtro
           </Link>
+          <Link href="/premium" className="text-sm text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1 font-medium">
+            <Crown className="w-3.5 h-3.5" />
+            Premium
+          </Link>
 
           {!loading && user && (
             <>
@@ -144,12 +148,18 @@ export function Navbar() {
           )}
 
           {!loading && !user && (
-            <Link href="/vender">
-              <Button size="sm" variant="outline" className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10">
-                <DollarSign className="w-3.5 h-3.5 mr-1" />
-                Quero Vender
-              </Button>
-            </Link>
+            <>
+              <Link href="/para-voce" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                <DollarSign className="w-3.5 h-3.5" />
+                Planos
+              </Link>
+              <Link href="/vender">
+                <Button size="sm" variant="outline" className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10">
+                  <DollarSign className="w-3.5 h-3.5 mr-1" />
+                  Quero Vender
+                </Button>
+              </Link>
+            </>
           )}
 
           {/* Auth section */}
@@ -231,6 +241,9 @@ export function Navbar() {
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
             <Link href="/imoveis" className="text-sm py-2" onClick={() => setMobileOpen(false)}>Imóveis</Link>
             <Link href="/busca" className="text-sm py-2" onClick={() => setMobileOpen(false)}>Filtro</Link>
+            <Link href="/premium" className="text-sm py-2 flex items-center gap-2 text-amber-500 font-medium" onClick={() => setMobileOpen(false)}>
+              <Crown className="w-3.5 h-3.5" /> Premium
+            </Link>
 
             {!loading && user && (
               <>
@@ -271,9 +284,14 @@ export function Navbar() {
             )}
 
             {!loading && !user && (
-              <Link href="/vender" className="text-sm py-2 flex items-center gap-2 text-emerald-500 font-medium" onClick={() => setMobileOpen(false)}>
-                <DollarSign className="w-3.5 h-3.5" /> Quero Vender
-              </Link>
+              <>
+                <Link href="/para-voce" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <DollarSign className="w-3.5 h-3.5" /> Planos
+                </Link>
+                <Link href="/vender" className="text-sm py-2 flex items-center gap-2 text-emerald-500 font-medium" onClick={() => setMobileOpen(false)}>
+                  <DollarSign className="w-3.5 h-3.5" /> Quero Vender
+                </Link>
+              </>
             )}
 
             <div className="border-t border-border/40 my-1" />
