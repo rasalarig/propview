@@ -63,6 +63,7 @@ function MensagensContent() {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [blockedMessage, setBlockedMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -209,12 +210,19 @@ function MensagensContent() {
       if (res.ok) {
         const data = await res.json();
         setMessages((prev) => [...prev, data.message]);
+        setBlockedMessage("");
         setTimeout(scrollToBottom, 100);
-        // Refresh conversations to update last message
         fetchConversations();
+      } else {
+        const data = await res.json();
+        if (data.blocked) {
+          setBlockedMessage(data.error);
+          setNewMessage(content);
+        } else {
+          setNewMessage(content);
+        }
       }
     } catch {
-      // Restore message on error
       setNewMessage(content);
     } finally {
       setSending(false);
@@ -443,6 +451,13 @@ function MensagensContent() {
 
               {/* Input Area */}
               <div className="p-3 border-t border-border/40">
+                {blockedMessage && (
+                  <div className="mb-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                    <span>{blockedMessage}</span>
+                    <button onClick={() => setBlockedMessage("")} className="ml-auto text-red-300 hover:text-red-200">✕</button>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <input
                     ref={inputRef}

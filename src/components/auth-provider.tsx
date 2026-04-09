@@ -8,6 +8,7 @@ interface AuthUser {
   email: string;
   avatar_url: string | null;
   is_premium: boolean;
+  is_admin: boolean;
 }
 
 interface AuthContextType {

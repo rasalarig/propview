@@ -14,6 +14,7 @@ export interface User {
   avatar_url: string | null;
   provider: string;
   is_premium: boolean;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -50,7 +51,7 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!sessionId) return null;
 
   const row = await getOne(
-    `SELECT u.id, u.name, u.email, u.avatar_url, u.provider, u.is_premium, u.created_at
+    `SELECT u.id, u.name, u.email, u.avatar_url, u.provider, u.is_premium, u.is_admin, u.created_at
      FROM sessions s
      JOIN users u ON s.user_id = u.id
      WHERE s.id = $1 AND s.expires_at > NOW()`,
@@ -166,6 +167,17 @@ export async function loginWithPassword(email: string, password: string): Promis
     throw new Error('INVALID_CREDENTIALS');
   }
 
+  return user;
+}
+
+export async function requireAdmin(): Promise<User> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('UNAUTHORIZED');
+  }
+  if (!user.is_admin) {
+    throw new Error('FORBIDDEN');
+  }
   return user;
 }
 

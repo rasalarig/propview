@@ -179,6 +179,8 @@ export async function initDB() {
 
     ALTER TABLE users ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
 
+    UPDATE users SET is_admin = TRUE WHERE email = 'rasa.larig@gmail.com';
+
     CREATE TABLE IF NOT EXISTS premium_codes (
       id SERIAL PRIMARY KEY,
       code TEXT NOT NULL UNIQUE,
@@ -196,6 +198,10 @@ export async function initDB() {
       activated_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(user_id, code_id)
     );
+
+    ALTER TABLE conversations ADD COLUMN IF NOT EXISTS intermediation_status TEXT DEFAULT 'none' CHECK(intermediation_status IN ('none', 'active', 'closed'));
+    ALTER TABLE conversations ADD COLUMN IF NOT EXISTS intermediation_notes TEXT;
+    ALTER TABLE conversations ADD COLUMN IF NOT EXISTS intermediation_started_at TIMESTAMPTZ;
   `);
 }
 

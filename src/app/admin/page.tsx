@@ -1,6 +1,6 @@
 import { AdminPropertyList } from "@/components/admin-property-list";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, Megaphone } from "lucide-react";
+import { Plus, Users, Megaphone, Settings, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { getAll, getOne } from "@/lib/db";
 
@@ -49,6 +49,12 @@ export default async function AdminPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/admin/configuracoes">
+              <Button variant="outline" size="sm" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                <Settings className="w-4 h-4 mr-2" />
+                Configurações
+              </Button>
+            </Link>
             <Link href="/admin/leads">
               <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
                 <Users className="w-4 h-4 mr-2" />
@@ -58,6 +64,12 @@ export default async function AdminPage() {
                     {newLeadsCount}
                   </span>
                 )}
+              </Button>
+            </Link>
+            <Link href="/admin/conversas">
+              <Button variant="outline" size="sm" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Conversas
               </Button>
             </Link>
             <Link href="/campanhas">

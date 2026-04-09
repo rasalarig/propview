@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle, Users, Crown } from "lucide-react";
+import { SlidersHorizontal, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle, Users, Crown, Settings } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 
@@ -101,6 +101,12 @@ export function Navbar() {
             <Crown className="w-3.5 h-3.5" />
             Premium
           </Link>
+          {!loading && user && user.is_admin && (
+            <Link href="/admin" className="text-sm text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-1 font-medium">
+              <Settings className="w-3.5 h-3.5" />
+              Admin
+            </Link>
+          )}
 
           {!loading && user && (
             <>
@@ -244,6 +250,11 @@ export function Navbar() {
             <Link href="/premium" className="text-sm py-2 flex items-center gap-2 text-amber-500 font-medium" onClick={() => setMobileOpen(false)}>
               <Crown className="w-3.5 h-3.5" /> Premium
             </Link>
+            {!loading && user && user.is_admin && (
+              <Link href="/admin" className="text-sm py-2 flex items-center gap-2 text-rose-400 font-medium" onClick={() => setMobileOpen(false)}>
+                <Settings className="w-3.5 h-3.5" /> Admin
+              </Link>
+            )}
 
             {!loading && user && (
               <>

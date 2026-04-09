@@ -18,6 +18,7 @@ export async function GET() {
         email: user.email,
         avatar_url: user.avatar_url,
         is_premium: user.is_premium || false,
+        is_admin: user.is_admin || false,
       },
     });
   } catch (error) {
