@@ -13,6 +13,7 @@ export interface User {
   password_hash: string | null;
   avatar_url: string | null;
   provider: string;
+  is_premium: boolean;
   created_at: string;
 }
 
@@ -49,7 +50,7 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!sessionId) return null;
 
   const row = await getOne(
-    `SELECT u.id, u.name, u.email, u.avatar_url, u.provider, u.created_at
+    `SELECT u.id, u.name, u.email, u.avatar_url, u.provider, u.is_premium, u.created_at
      FROM sessions s
      JOIN users u ON s.user_id = u.id
      WHERE s.id = $1 AND s.expires_at > NOW()`,

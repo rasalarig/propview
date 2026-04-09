@@ -25,6 +25,28 @@
     --ring: 160 84% 39%;
     --radius: 0.75rem;
   }
+
+  .premium {
+    --background: 220 20% 4%;        /* Very deep dark */
+    --foreground: 40 20% 95%;        /* Warm off-white */
+    --card: 220 20% 7%;              /* Dark card */
+    --card-foreground: 40 20% 95%;
+    --popover: 220 20% 7%;
+    --popover-foreground: 40 20% 95%;
+    --primary: 40 80% 50%;           /* Rich gold */
+    --primary-foreground: 220 20% 4%;/* Dark text on gold */
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 40 20% 95%;
+    --muted: 220 15% 12%;
+    --muted-foreground: 40 10% 55%;  /* Warm muted */
+    --accent: 40 80% 50%;            /* Gold accent */
+    --accent-foreground: 220 20% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 20% 18%;            /* Warm border */
+    --input: 40 20% 18%;
+    --ring: 40 80% 50%;              /* Gold ring */
+  }
 }
 
 @layer base {
