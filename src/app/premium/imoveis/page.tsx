@@ -58,7 +58,7 @@ export default function PremiumImoveisPage() {
   }
 
   return (
-    <div className="pt-40 pb-24 px-4">
+    <div className="pt-28 pb-24 px-4">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-8">

@@ -23,6 +23,7 @@ const authedTabs = [
 export function BottomTabBar() {
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
+  if (pathname.startsWith("/premium")) return null;
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);

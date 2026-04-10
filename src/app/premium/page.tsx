@@ -48,7 +48,7 @@ export default function PremiumPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative pt-32 md:pt-40 pb-20 px-4 overflow-hidden">
+      <section className="relative pt-28 md:pt-28 pb-20 px-4 overflow-hidden">
         {/* Background decorations */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[120px]" />

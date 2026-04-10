@@ -5,9 +5,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, Menu, X, LogIn, LogOut, Heart, Bell, Film, DollarSign, Home, Plus, MessageCircle, Users, Crown, Settings } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 
 export function Navbar() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/premium")) return null;
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, loading, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);

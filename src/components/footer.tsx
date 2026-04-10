@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Crown } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/premium")) return null;
   return (
     <footer className="hidden md:block border-t border-border/40 bg-background/50">
       <div className="container mx-auto px-4 py-8">
