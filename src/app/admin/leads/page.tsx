@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default function LeadsPage() {
   return (
-    <div className="container mx-auto px-4 py-8 pt-24">
+    <div className="container mx-auto px-4 py-8 pt-40">
       <LeadsThermometer />
     </div>
   );

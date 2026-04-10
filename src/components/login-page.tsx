@@ -88,7 +88,7 @@ export function LoginPage() {
         <CardHeader className="text-center space-y-4 pb-2">
           {/* Logo */}
           <div className="flex justify-center">
-            <div className="h-32 md:h-60 w-[28rem] md:w-[48rem] mx-auto overflow-hidden relative">
+            <div className="h-48 md:h-[90px] w-[28rem] md:w-[48rem] mx-auto overflow-hidden relative">
               <Image
                 src="/logo_novo.png"
                 alt="MelhorMetro"
