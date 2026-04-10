@@ -8,9 +8,6 @@ const nextConfig = {
       { protocol: 'http', hostname: '**' },
     ],
   },
-  serverActions: {
-    bodySizeLimit: '100mb',
-  },
   experimental: {
     serverComponentsExternalPackages: ['pg', '@anthropic-ai/sdk', 'openai'],
     workerThreads: false,
