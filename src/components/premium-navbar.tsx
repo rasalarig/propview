@@ -37,7 +37,7 @@ export function PremiumNavbar() {
           <Crown className="w-8 h-8 text-amber-500" />
           <div>
             <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
-              PropView
+              MelhorMetro
             </span>
             <span className="text-xs font-semibold text-amber-500/70 block -mt-1 tracking-[0.2em] uppercase">
               Premium
@@ -93,7 +93,7 @@ export function PremiumNavbar() {
                         className="block px-3 py-2 text-sm text-amber-100/60 hover:bg-amber-500/10 transition-colors"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        Voltar ao PropView
+                        Voltar ao MelhorMetro
                       </Link>
                       <button
                         onClick={handleLogout}

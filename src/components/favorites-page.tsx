@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Heart, Maximize } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "@/components/like-button";
+import { FavoritesCompareChat } from "@/components/favorites-compare-chat";
 
 interface PropertyImage {
   id: number;
@@ -126,6 +127,7 @@ export function FavoritesPage() {
             </Link>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {favorites.map((property) => (
               <div
@@ -179,6 +181,11 @@ export function FavoritesPage() {
               </div>
             ))}
           </div>
+
+          {favorites.length >= 2 && (
+            <FavoritesCompareChat properties={favorites} />
+          )}
+          </>
         )}
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { ReelsFeed } from "@/components/reels-feed";
 
 export const metadata = {
-  title: "Reels | PropView",
+  title: "Reels | MelhorMetro",
   description: "Explore imóveis no estilo reels - navegue deslizando entre os melhores imóveis disponíveis.",
 };
 

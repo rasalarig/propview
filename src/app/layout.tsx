@@ -13,7 +13,7 @@ const geistSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PropView | Busca Inteligente de Imóveis",
+  title: "MelhorMetro | Busca Inteligente de Imóveis",
   description: "Encontre o imóvel dos seus sonhos usando inteligência artificial. Busque por qualquer característica: terrenos com árvores, casas com vista, e muito mais.",
 };
 

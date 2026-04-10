@@ -378,7 +378,7 @@ export function PropertyDetail({ property }: PropertyProps) {
                 </Button>
 
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel: ${property.title}\n${property.city}, ${property.state}\nValor: ${formatPrice(property.price)}\n\nVi no PropView!`)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel: ${property.title}\n${property.city}, ${property.state}\nValor: ${formatPrice(property.price)}\n\nVi no MelhorMetro!`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"

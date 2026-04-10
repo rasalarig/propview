@@ -72,7 +72,7 @@ export function ReelsFeed() {
             <Home className="w-12 h-12 text-emerald-400" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-3">
-            Bem-vindo ao PropView
+            Bem-vindo ao MelhorMetro
           </h1>
           <p className="text-muted-foreground text-base mb-10 leading-relaxed">
             A plataforma inteligente para comprar e vender imóveis.<br />

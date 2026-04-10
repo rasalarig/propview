@@ -4,7 +4,7 @@ import { PremiumFooter } from "@/components/premium-footer";
 import { PremiumBottomTabBar } from "@/components/premium-bottom-tab-bar";
 
 export const metadata: Metadata = {
-  title: "PropView Premium | Imóveis de Alto Padrão",
+  title: "MelhorMetro Premium | Imóveis de Alto Padrão",
   description: "Plataforma exclusiva para imobiliárias premium. Imóveis acima de R$10 milhões.",
 };
 

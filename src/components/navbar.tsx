@@ -83,7 +83,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center group flex-shrink-0">
           <img
             src="/logo_novo.png"
-            alt="PropView"
+            alt="MelhorMetro"
             className="h-48 w-auto"
           />
         </Link>

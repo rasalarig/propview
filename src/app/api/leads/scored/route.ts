@@ -104,6 +104,10 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Sort by temperature: quente first, then morno, frio, convertido; within each group by score DESC
+    const tempPriority: Record<string, number> = { quente: 0, morno: 1, frio: 2, convertido: 3 };
+    leads.sort((a, b) => (tempPriority[a.temperature] ?? 4) - (tempPriority[b.temperature] ?? 4) || b.score - a.score);
+
     // Filter by temperature if requested
     const filtered = temperature
       ? leads.filter((l: { temperature: string }) => l.temperature === temperature)

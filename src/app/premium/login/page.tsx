@@ -91,7 +91,7 @@ export default function PremiumLoginPage() {
           </h1>
           <p className="text-sm text-amber-100/40 mt-1">
             {mode === "login"
-              ? "Acesse o PropView Premium"
+              ? "Acesse o MelhorMetro Premium"
               : "Crie sua conta para acessar o Premium"}
           </p>
         </div>

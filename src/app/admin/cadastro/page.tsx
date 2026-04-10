@@ -1,7 +1,7 @@
 import { PropertyForm } from "@/components/property-form";
 
 export const metadata = {
-  title: "Cadastrar Imóvel | PropView",
+  title: "Cadastrar Imóvel | MelhorMetro",
   description: "Cadastre um novo imóvel na plataforma",
 };
 

@@ -7,7 +7,7 @@ import { getAll, getOne } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Painel Admin | PropView",
+  title: "Painel Admin | MelhorMetro",
   description: "Gerenciar imóveis cadastrados",
 };
 

@@ -179,103 +179,120 @@ export function LeadsThermometer() {
           </p>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {leads.map((lead) => {
-            const config = tempConfig[lead.temperature] || tempConfig.frio;
-            const TempIcon = config.icon;
-            const scorePercent = Math.min(lead.score, 100);
-
-            return (
-              <Card key={`${lead.user_id}-${lead.property_id}`} className="p-4 bg-card border-border/50 hover:border-emerald-500/20 transition-colors">
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  {/* Avatar + Info */}
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    {lead.avatar_url ? (
-                      <img src={lead.avatar_url} alt={lead.user_name} className="w-10 h-10 rounded-full shrink-0" />
-                    ) : (
-                      <div className={`w-10 h-10 rounded-full ${config.bg} flex items-center justify-center shrink-0 ${config.color} font-bold text-sm`}>
-                        {getInitial(lead.user_name)}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold">{lead.user_name}</span>
-                        <Badge className={`text-xs ${config.bg} ${config.color} ${config.border} flex items-center gap-1`}>
-                          <TempIcon className="w-3 h-3" />
-                          {config.label}
-                        </Badge>
-                        <span className={`text-sm font-bold ${config.color}`}>{lead.score} pts</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{lead.user_email}</p>
-                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                        <Link href={`/imoveis/${lead.property_id}`} className="hover:text-emerald-400 truncate">
-                          {lead.property_title}
-                        </Link>
-                        <span>·</span>
-                        <span>{lead.property_city}</span>
-                        <span>·</span>
-                        <span className="text-emerald-400 font-medium">{formatPrice(lead.property_price)}</span>
-                      </div>
-
-                      {/* Score bar */}
-                      <div className="mt-2 w-full bg-secondary/50 rounded-full h-1.5">
-                        <div
-                          className={`h-1.5 rounded-full transition-all ${
-                            lead.temperature === "quente" ? "bg-red-500" :
-                            lead.temperature === "morno" ? "bg-amber-500" :
-                            lead.temperature === "convertido" ? "bg-emerald-500" :
-                            "bg-cyan-500"
-                          }`}
-                          style={{ width: `${scorePercent}%` }}
-                        />
-                      </div>
-
-                      {/* Interaction icons */}
-                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                        {lead.interactions.view_complete > 0 && (
-                          <span className="flex items-center gap-0.5" title="Views completas">
-                            <Eye className="w-3 h-3" /> {lead.interactions.view_complete}
-                          </span>
-                        )}
-                        {lead.interactions.like > 0 && (
-                          <span className="flex items-center gap-0.5 text-rose-400" title="Curtidas">
-                            <Heart className="w-3 h-3" /> {lead.interactions.like}
-                          </span>
-                        )}
-                        {lead.interactions.share > 0 && (
-                          <span className="flex items-center gap-0.5" title="Compartilhamentos">
-                            <Share2 className="w-3 h-3" /> {lead.interactions.share}
-                          </span>
-                        )}
-                        {lead.interactions.click_details > 0 && (
-                          <span className="flex items-center gap-0.5" title="Cliques em detalhes">
-                            <MousePointer className="w-3 h-3" /> {lead.interactions.click_details}
-                          </span>
-                        )}
-                        {lead.interactions.click_whatsapp > 0 && (
-                          <span className="flex items-center gap-0.5 text-green-400" title="Cliques WhatsApp">
-                            <MessageSquare className="w-3 h-3" /> {lead.interactions.click_whatsapp}
-                          </span>
-                        )}
-                        <span className="text-muted-foreground/60">
-                          · {timeAgo(lead.last_interaction)}
-                        </span>
-                      </div>
-                    </div>
+        <div className="space-y-6">
+          {(["quente", "morno", "frio", "convertido"] as const)
+            .map(temp => ({ temp, items: leads.filter(l => l.temperature === temp) }))
+            .filter(g => g.items.length > 0)
+            .map(group => {
+              const groupConfig = tempConfig[group.temp];
+              const GroupIcon = groupConfig.icon;
+              return (
+                <div key={group.temp} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <GroupIcon className={`w-4 h-4 ${groupConfig.color}`} />
+                    <span className={`text-sm font-semibold ${groupConfig.color}`}>{groupConfig.label}</span>
+                    <span className="text-xs text-muted-foreground">({group.items.length})</span>
+                    <div className="flex-1 border-t border-border/30" />
                   </div>
+                  {group.items.map((lead) => {
+                    const config = tempConfig[lead.temperature] || tempConfig.frio;
+                    const TempIcon = config.icon;
+                    const scorePercent = Math.min(lead.score, 100);
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Link href={`/imoveis/${lead.property_id}`}>
-                      <Button size="sm" variant="outline" className="text-xs">
-                        <ExternalLink className="w-3 h-3 mr-1" /> Ver Imovel
-                      </Button>
-                    </Link>
-                  </div>
+                    return (
+                      <Card key={`${lead.user_id}-${lead.property_id}`} className="p-4 bg-card border-border/50 hover:border-emerald-500/20 transition-colors">
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          {/* Avatar + Info */}
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            {lead.avatar_url ? (
+                              <img src={lead.avatar_url} alt={lead.user_name} className="w-10 h-10 rounded-full shrink-0" />
+                            ) : (
+                              <div className={`w-10 h-10 rounded-full ${config.bg} flex items-center justify-center shrink-0 ${config.color} font-bold text-sm`}>
+                                {getInitial(lead.user_name)}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold">{lead.user_name}</span>
+                                <Badge className={`text-xs ${config.bg} ${config.color} ${config.border} flex items-center gap-1`}>
+                                  <TempIcon className="w-3 h-3" />
+                                  {config.label}
+                                </Badge>
+                                <span className={`text-sm font-bold ${config.color}`}>{lead.score} pts</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{lead.user_email}</p>
+                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                <Link href={`/imoveis/${lead.property_id}`} className="hover:text-emerald-400 truncate">
+                                  {lead.property_title}
+                                </Link>
+                                <span>·</span>
+                                <span>{lead.property_city}</span>
+                                <span>·</span>
+                                <span className="text-emerald-400 font-medium">{formatPrice(lead.property_price)}</span>
+                              </div>
+
+                              {/* Score bar */}
+                              <div className="mt-2 w-full bg-secondary/50 rounded-full h-1.5">
+                                <div
+                                  className={`h-1.5 rounded-full transition-all ${
+                                    lead.temperature === "quente" ? "bg-red-500" :
+                                    lead.temperature === "morno" ? "bg-amber-500" :
+                                    lead.temperature === "convertido" ? "bg-emerald-500" :
+                                    "bg-cyan-500"
+                                  }`}
+                                  style={{ width: `${scorePercent}%` }}
+                                />
+                              </div>
+
+                              {/* Interaction icons */}
+                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                {lead.interactions.view_complete > 0 && (
+                                  <span className="flex items-center gap-0.5" title="Views completas">
+                                    <Eye className="w-3 h-3" /> {lead.interactions.view_complete}
+                                  </span>
+                                )}
+                                {lead.interactions.like > 0 && (
+                                  <span className="flex items-center gap-0.5 text-rose-400" title="Curtidas">
+                                    <Heart className="w-3 h-3" /> {lead.interactions.like}
+                                  </span>
+                                )}
+                                {lead.interactions.share > 0 && (
+                                  <span className="flex items-center gap-0.5" title="Compartilhamentos">
+                                    <Share2 className="w-3 h-3" /> {lead.interactions.share}
+                                  </span>
+                                )}
+                                {lead.interactions.click_details > 0 && (
+                                  <span className="flex items-center gap-0.5" title="Cliques em detalhes">
+                                    <MousePointer className="w-3 h-3" /> {lead.interactions.click_details}
+                                  </span>
+                                )}
+                                {lead.interactions.click_whatsapp > 0 && (
+                                  <span className="flex items-center gap-0.5 text-green-400" title="Cliques WhatsApp">
+                                    <MessageSquare className="w-3 h-3" /> {lead.interactions.click_whatsapp}
+                                  </span>
+                                )}
+                                <span className="text-muted-foreground/60">
+                                  · {timeAgo(lead.last_interaction)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Link href={`/imoveis/${lead.property_id}`}>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                <ExternalLink className="w-3 h-3 mr-1" /> Ver Imovel
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
-              </Card>
-            );
-          })}
+              );
+            })}
         </div>
       )}
     </>

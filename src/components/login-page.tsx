@@ -91,7 +91,7 @@ export function LoginPage() {
             <div className="h-32 md:h-60 w-[28rem] md:w-[48rem] mx-auto overflow-hidden relative">
               <Image
                 src="/logo_novo.png"
-                alt="PropView"
+                alt="MelhorMetro"
                 width={1536}
                 height={1024}
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-auto"

@@ -56,7 +56,7 @@ export async function generateMetadata({
   if (!property) return { title: "Imóvel não encontrado" };
 
   return {
-    title: `${property.title} | PropView`,
+    title: `${property.title} | MelhorMetro`,
     description: property.description.substring(0, 160),
   };
 }

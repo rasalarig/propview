@@ -1,7 +1,7 @@
 import { LeadsThermometer } from "@/components/leads-thermometer";
 
 export const metadata = {
-  title: "Leads | PropView",
+  title: "Leads | MelhorMetro",
 };
 
 export const dynamic = "force-dynamic";

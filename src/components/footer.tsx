@@ -11,7 +11,7 @@ export function Footer() {
             <div className="h-24 w-96 overflow-hidden relative">
               <Image
                 src="/logo_novo.png"
-                alt="PropView"
+                alt="MelhorMetro"
                 width={1536}
                 height={1024}
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-auto"
@@ -28,7 +28,7 @@ export function Footer() {
             <Link href="/admin" className="hover:text-foreground transition-colors">Admin</Link>
           </div>
           <p className="text-xs text-muted-foreground">
-            &copy; 2026 PropView. Powered by AI.
+            &copy; 2026 MelhorMetro. Powered by AI.
           </p>
         </div>
       </div>

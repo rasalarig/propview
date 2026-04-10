@@ -1,7 +1,7 @@
 import { CampaignsPage } from "@/components/campaigns-page";
 
 export const metadata = {
-  title: "Campanhas | PropView",
+  title: "Campanhas | MelhorMetro",
 };
 
 export const dynamic = "force-dynamic";

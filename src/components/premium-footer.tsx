@@ -8,11 +8,11 @@ export function PremiumFooter() {
           <div className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-amber-500" />
             <span className="text-lg font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
-              PropView Premium
+              MelhorMetro Premium
             </span>
           </div>
           <p className="text-xs text-amber-100/30">
-            &copy; 2026 PropView Premium. Imóveis de alto padrão.
+            &copy; 2026 MelhorMetro Premium. Imóveis de alto padrão.
           </p>
         </div>
       </div>

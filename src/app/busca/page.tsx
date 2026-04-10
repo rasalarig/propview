@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { SearchPageClient } from "@/components/search-page-client";
 
 export const metadata = {
-  title: "Busca Inteligente | PropView",
+  title: "Busca Inteligente | MelhorMetro",
   description:
     "Busque imóveis por linguagem natural com inteligência artificial",
 };

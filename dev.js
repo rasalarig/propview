@@ -12,7 +12,7 @@ const PID_FILE = path.join(__dirname, '.dev.pid');
 const NEXT_DIR = path.join(__dirname, '.next');
 
 function log(msg) {
-  console.log(`\x1b[36m[propview]\x1b[0m ${msg}`);
+  console.log(`\x1b[36m[melhormetro]\x1b[0m ${msg}`);
 }
 
 // 1. Kill previous dev server (from our PID file)

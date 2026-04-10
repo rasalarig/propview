@@ -4,7 +4,7 @@ import { getAll, getOne } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Imóveis Disponíveis | PropView",
+  title: "Imóveis Disponíveis | MelhorMetro",
   description: "Veja todos os imóveis disponíveis para compra",
 };
 
