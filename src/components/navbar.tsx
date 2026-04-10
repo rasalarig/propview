@@ -84,9 +84,9 @@ export function Navbar() {
     <>
     {/* Mobile Header */}
     <header className="md:hidden fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="flex items-center justify-center h-20">
+      <div className="flex items-center justify-center h-32">
         <Link href="/">
-          <img src="/logo_novo.png" alt="MelhorMetro" className="h-16 w-auto" />
+          <img src="/logo_novo.png" alt="MelhorMetro" className="h-28 w-auto" />
         </Link>
       </div>
     </header>
