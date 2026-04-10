@@ -84,11 +84,112 @@ export function Navbar() {
     <>
     {/* Mobile Header */}
     <header className="md:hidden fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="flex items-center justify-center h-14">
+      <div className="flex items-center justify-between h-14 px-4">
         <Link href="/" className="h-12 overflow-hidden flex items-center justify-center">
           <img src="/logo_novo.png" alt="MelhorMetro" className="h-36 w-auto" />
         </Link>
+        <button onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
+      {mobileOpen && (
+        <div className="border-t border-border/40 bg-background/95 backdrop-blur-xl max-h-[70vh] overflow-y-auto">
+          <nav className="px-4 py-4 flex flex-col gap-3">
+            <Link href="/imoveis" className="text-sm py-2" onClick={() => setMobileOpen(false)}>Imóveis</Link>
+            <Link href="/busca" className="text-sm py-2" onClick={() => setMobileOpen(false)}>Filtro</Link>
+            <Link href="/premium" className="text-sm py-2 flex items-center gap-2 text-amber-500 font-medium" onClick={() => setMobileOpen(false)}>
+              <Crown className="w-3.5 h-3.5" /> Premium
+            </Link>
+            {!loading && user && user.is_admin && (
+              <Link href="/admin" className="text-sm py-2 flex items-center gap-2 text-rose-400 font-medium" onClick={() => setMobileOpen(false)}>
+                <Settings className="w-3.5 h-3.5" /> Admin
+              </Link>
+            )}
+
+            {!loading && user && (
+              <>
+                <div className="border-t border-border/40 my-1" />
+                <Link href="/reels" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Film className="w-3.5 h-3.5" /> Reels
+                </Link>
+                <Link href="/favoritos" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Heart className="w-3.5 h-3.5" /> Favoritos
+                </Link>
+                <Link href="/alertas" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Bell className="w-3.5 h-3.5" /> Alertas
+                  {alertCount > 0 && (
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold leading-none">
+                      {alertCount > 99 ? "99" : alertCount}
+                    </span>
+                  )}
+                </Link>
+                <Link href="/mensagens" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <MessageCircle className="w-3.5 h-3.5" /> Mensagens
+                  {unreadMsgCount > 0 && (
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold leading-none">
+                      {unreadMsgCount > 99 ? "99" : unreadMsgCount}
+                    </span>
+                  )}
+                </Link>
+                <div className="border-t border-border/40 my-1" />
+                <Link href="/vender/meus-imoveis" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Home className="w-3.5 h-3.5" /> Meus Imóveis
+                </Link>
+                <Link href="/vender/leads" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Users className="w-3.5 h-3.5" /> Leads
+                </Link>
+                <Link href="/vender/imovel" className="text-sm py-2 flex items-center gap-2 text-emerald-500 font-medium" onClick={() => setMobileOpen(false)}>
+                  <Plus className="w-3.5 h-3.5" /> Cadastrar Imóvel
+                </Link>
+              </>
+            )}
+
+            {!loading && !user && (
+              <>
+                <Link href="/para-voce" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <DollarSign className="w-3.5 h-3.5" /> Planos
+                </Link>
+                <Link href="/vender" className="text-sm py-2 flex items-center gap-2 text-emerald-500 font-medium" onClick={() => setMobileOpen(false)}>
+                  <DollarSign className="w-3.5 h-3.5" /> Quero Vender
+                </Link>
+              </>
+            )}
+
+            <div className="border-t border-border/40 my-1" />
+
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-sm font-medium">
+                        {getInitial(user.name)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Link href="/login" onClick={() => setMobileOpen(false)}>
+                    <Button size="sm" className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white">
+                      <LogIn className="w-3.5 h-3.5 mr-1" />
+                      Entrar
+                    </Button>
+                  </Link>
+                )}
+              </>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
 
     {/* Desktop Header */}
