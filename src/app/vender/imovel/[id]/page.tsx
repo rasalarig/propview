@@ -7,14 +7,12 @@ import { Button } from "@/components/ui/button";
 import {
   Loader2,
   Plus,
-  Trash2,
   Star,
   CheckCircle,
   Home,
   ImageIcon,
   Upload,
   Link2,
-  Video,
   X,
   Play,
 } from "lucide-react";
@@ -76,11 +74,6 @@ interface MediaEntry {
   uploading?: boolean;
 }
 
-interface LinkEntry {
-  url: string;
-  is_cover: boolean;
-}
-
 interface PropertyImage {
   id: number;
   filename: string;
@@ -121,11 +114,11 @@ export default function EditarImovelPage() {
   // Characteristics
   const [selectedChars, setSelectedChars] = useState<string[]>([]);
 
-  // Media - tab toggle between upload and link
-  const [mediaTab, setMediaTab] = useState<"upload" | "link">("link");
-  const [mediaEntries, setMediaEntries] = useState<MediaEntry[]>([]);
-  const [linkEntries, setLinkEntries] = useState<LinkEntry[]>([]);
+  // Media - unified list of all media (existing + new uploads)
+  const [mediaItems, setMediaItems] = useState<MediaEntry[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
 
   // UI state
   const [submitting, setSubmitting] = useState(false);
@@ -186,18 +179,15 @@ export default function EditarImovelPage() {
         const chars = data.characteristics || [];
         setSelectedChars(Array.isArray(chars) ? chars : []);
 
-        // Images - load existing as link entries
+        // Images - load existing into unified media list
         const images: PropertyImage[] = data.images || [];
-
         if (images.length > 0) {
-          const existingLinks: LinkEntry[] = images.map((img) => ({
+          const existing: MediaEntry[] = images.map((img) => ({
             url: img.filename,
             is_cover: img.is_cover === 1,
+            type: /\.(mp4|mov|webm|avi|mkv)$/i.test(img.filename) || /youtube|tiktok|instagram|vimeo/i.test(img.filename) ? "video" : "image",
           }));
-          setLinkEntries(existingLinks);
-          setMediaTab("link");
-        } else {
-          setLinkEntries([{ url: "", is_cover: true }]);
+          setMediaItems(existing);
         }
 
         setLoadingProperty(false);
@@ -213,7 +203,7 @@ export default function EditarImovelPage() {
   // Cleanup preview URLs
   useEffect(() => {
     return () => {
-      mediaEntries.forEach((entry) => {
+      mediaItems.forEach((entry) => {
         if (entry.preview) URL.revokeObjectURL(entry.preview);
       });
     };
@@ -228,34 +218,7 @@ export default function EditarImovelPage() {
     );
   }
 
-  // --- Link entries (paste URL mode) ---
-  function addLinkField() {
-    setLinkEntries((prev) => [...prev, { url: "", is_cover: false }]);
-  }
-
-  function removeLinkField(index: number) {
-    setLinkEntries((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      if (next.length > 0 && !next.some((e) => e.is_cover)) {
-        next[0].is_cover = true;
-      }
-      return next;
-    });
-  }
-
-  function updateLinkUrl(index: number, url: string) {
-    setLinkEntries((prev) =>
-      prev.map((e, i) => (i === index ? { ...e, url } : e))
-    );
-  }
-
-  function setLinkCover(index: number) {
-    setLinkEntries((prev) =>
-      prev.map((e, i) => ({ ...e, is_cover: i === index }))
-    );
-  }
-
-  // --- File upload entries ---
+  // --- Unified media management ---
   const addFiles = useCallback((files: FileList | File[]) => {
     const newEntries: MediaEntry[] = [];
 
@@ -275,7 +238,6 @@ export default function EditarImovelPage() {
       }
 
       const preview = isImage ? URL.createObjectURL(file) : undefined;
-
       newEntries.push({
         url: "",
         file,
@@ -285,22 +247,17 @@ export default function EditarImovelPage() {
       });
     }
 
-    setMediaEntries((prev) => {
+    setMediaItems((prev) => {
       const combined = [...prev, ...newEntries];
       if (combined.length > 0 && !combined.some((e) => e.is_cover)) {
-        const firstImage = combined.findIndex((e) => e.type === "image");
-        if (firstImage >= 0) {
-          combined[firstImage].is_cover = true;
-        } else {
-          combined[0].is_cover = true;
-        }
+        combined[0].is_cover = true;
       }
       return combined;
     });
   }, []);
 
-  function removeMediaEntry(index: number) {
-    setMediaEntries((prev) => {
+  function removeMediaItem(index: number) {
+    setMediaItems((prev) => {
       const removed = prev[index];
       if (removed.preview) URL.revokeObjectURL(removed.preview);
       const next = prev.filter((_, i) => i !== index);
@@ -312,12 +269,24 @@ export default function EditarImovelPage() {
   }
 
   function setMediaCover(index: number) {
-    setMediaEntries((prev) =>
+    setMediaItems((prev) =>
       prev.map((e, i) => ({ ...e, is_cover: i === index }))
     );
   }
 
-  // Drag and drop handlers
+  function addLinkMedia() {
+    if (!linkUrl.trim()) return;
+    const url = linkUrl.trim();
+    const isVideo = /\.(mp4|mov|webm|avi|mkv)$/i.test(url) || /youtube|tiktok|instagram|vimeo/i.test(url);
+    setMediaItems((prev) => {
+      const combined = [...prev, { url, is_cover: false, type: (isVideo ? "video" : "image") as "video" | "image" }];
+      if (combined.length === 1) combined[0].is_cover = true;
+      return combined;
+    });
+    setLinkUrl("");
+    setShowLinkInput(false);
+  }
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -353,7 +322,7 @@ export default function EditarImovelPage() {
   );
 
   async function uploadFiles(): Promise<{ url: string; is_cover: boolean }[]> {
-    const filesToUpload = mediaEntries.filter((e) => e.file);
+    const filesToUpload = mediaItems.filter((e) => e.file);
     if (filesToUpload.length === 0) return [];
 
     setUploadProgress("Enviando arquivos...");
@@ -380,9 +349,10 @@ export default function EditarImovelPage() {
       type: string;
     }[];
 
+    // Map uploaded URLs back with is_cover info
     const results: { url: string; is_cover: boolean }[] = [];
     let uploadIndex = 0;
-    for (const entry of mediaEntries) {
+    for (const entry of mediaItems) {
       if (entry.file) {
         results.push({
           url: uploadedFiles[uploadIndex].url,
@@ -430,12 +400,13 @@ export default function EditarImovelPage() {
     try {
       let allImageUrls: { url: string; is_cover: boolean }[] = [];
 
-      // Always include existing link entries (existing images)
-      const validLinks = linkEntries.filter((e) => e.url.trim());
-      allImageUrls = validLinks.map((e) => ({ url: e.url.trim(), is_cover: e.is_cover }));
+      // Existing items (already have URLs)
+      const existingItems = mediaItems.filter((e) => e.url && !e.file);
+      allImageUrls = existingItems.map((e) => ({ url: e.url, is_cover: e.is_cover }));
 
       // Upload new files and append
-      if (mediaTab === "upload" && mediaEntries.length > 0) {
+      const hasNewFiles = mediaItems.some((e) => e.file);
+      if (hasNewFiles) {
         const uploaded = await uploadFiles();
         allImageUrls = [...allImageUrls, ...uploaded];
       }
@@ -812,249 +783,140 @@ export default function EditarImovelPage() {
               Fotos e Vídeos
             </h2>
 
-            {/* Tab toggle */}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setMediaTab("upload")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  mediaTab === "upload"
-                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/40"
-                    : "bg-background/50 text-muted-foreground border border-border/30 hover:border-border/60"
-                }`}
-              >
-                <Upload className="w-4 h-4" />
-                Enviar Arquivos
-              </button>
-              <button
-                type="button"
-                onClick={() => setMediaTab("link")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  mediaTab === "link"
-                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/40"
-                    : "bg-background/50 text-muted-foreground border border-border/30 hover:border-border/60"
-                }`}
-              >
-                <Link2 className="w-4 h-4" />
-                Colar Link
-              </button>
-            </div>
+            {/* Unified media grid */}
+            {mediaItems.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {mediaItems.map((entry, index) => {
+                  const isVideo = entry.type === "video";
+                  const displayUrl = entry.preview || (entry.url ? (entry.url.startsWith("http") || entry.url.startsWith("/") ? entry.url : `/uploads/${entry.url}`) : "");
 
-            {/* Upload tab */}
-            {mediaTab === "upload" && (
-              <div className="space-y-4">
-                {/* Drag and drop area */}
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-                    isDragOver
-                      ? "border-emerald-500 bg-emerald-500/10"
-                      : "border-border/50 hover:border-emerald-500/40 hover:bg-emerald-500/5"
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <div className="flex items-center justify-center gap-3 mb-3">
-                    <ImageIcon className="w-8 h-8 text-emerald-500/60" />
-                    <Video className="w-8 h-8 text-emerald-500/60" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Arraste fotos e vídeos aqui ou{" "}
-                    <span className="text-emerald-400 font-medium">
-                      clique para selecionar
-                    </span>
-                  </p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    JPG, PNG, WebP, GIF, MP4, MOV, WebM - Máximo 10MB por arquivo
-                  </p>
-                </div>
-
-                {/* Media preview grid */}
-                {mediaEntries.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {mediaEntries.map((entry, index) => (
-                      <div
-                        key={index}
-                        className="relative group rounded-lg overflow-hidden border border-border/30 bg-background aspect-square"
-                      >
-                        {entry.type === "image" && entry.preview ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={entry.preview}
-                            alt={entry.file?.name || `Media ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-background">
-                            <div className="text-center">
-                              <Play className="w-8 h-8 text-emerald-500/60 mx-auto mb-1" />
-                              <span className="text-[10px] text-muted-foreground truncate block px-1">
-                                {entry.file?.name || "Video"}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Cover badge */}
-                        {entry.is_cover && (
-                          <span className="absolute top-1 left-1 text-[9px] bg-yellow-500 text-black font-bold px-1.5 py-0.5 rounded">
-                            CAPA
-                          </span>
-                        )}
-
-                        {/* Type badge */}
-                        {entry.type === "video" && (
-                          <span className="absolute top-1 right-1 text-[9px] bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">
-                            VIDEO
-                          </span>
-                        )}
-
-                        {/* Hover overlay with actions */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setMediaCover(index);
-                            }}
-                            title="Definir como capa"
-                            className={`p-1.5 rounded-full transition-colors ${
-                              entry.is_cover
-                                ? "bg-yellow-500 text-black"
-                                : "bg-white/20 text-white hover:bg-yellow-500/80 hover:text-black"
-                            }`}
-                          >
-                            <Star
-                              className="w-4 h-4"
-                              fill={entry.is_cover ? "currentColor" : "none"}
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeMediaEntry(index);
-                            }}
-                            title="Remover"
-                            className="p-1.5 rounded-full bg-white/20 text-white hover:bg-red-500/80 transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                  return (
+                    <div
+                      key={index}
+                      className={`relative group rounded-lg overflow-hidden border-2 bg-background aspect-square ${
+                        entry.is_cover ? "border-emerald-500" : "border-border/30"
+                      }`}
+                    >
+                      {isVideo ? (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                          <Play className="w-8 h-8 text-emerald-500/60" />
+                          <p className="absolute bottom-1 left-1 right-1 text-[9px] text-muted-foreground truncate text-center">
+                            {entry.file?.name || "Vídeo"}
+                          </p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {mediaEntries.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {mediaEntries.length} arquivo(s) selecionado(s).
-                    Passe o mouse sobre uma imagem para definir como capa ou remover.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Link tab */}
-            {mediaTab === "link" && (
-              <div className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  Cole links de imagens (ex: Unsplash, Imgur). Clique na estrela
-                  para definir a foto de capa.
-                </p>
-
-                {linkEntries.map((entry, index) => (
-                  <div key={index} className="flex gap-2 items-start">
-                    <div className="flex-1 space-y-1">
-                      <div className="flex gap-2">
-                        <input
-                          type="url"
-                          value={entry.url}
-                          onChange={(e) => updateLinkUrl(index, e.target.value)}
-                          placeholder="https://exemplo.com/foto.jpg"
-                          className={inputClass}
+                      ) : displayUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={displayUrl}
+                          alt={`Media ${index + 1}`}
+                          className="w-full h-full object-cover"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setLinkCover(index)}
-                          title={
-                            entry.is_cover
-                              ? "Foto de capa"
-                              : "Definir como capa"
-                          }
-                          className={`flex-shrink-0 p-2.5 rounded-lg border transition-colors ${
-                            entry.is_cover
-                              ? "border-yellow-500/60 bg-yellow-500/10 text-yellow-400"
-                              : "border-border/50 text-muted-foreground hover:text-yellow-400 hover:border-yellow-500/40"
-                          }`}
-                        >
-                          <Star
-                            className="w-4 h-4"
-                            fill={entry.is_cover ? "currentColor" : "none"}
-                          />
-                        </button>
-                        {linkEntries.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeLinkField(index)}
-                            className="flex-shrink-0 p-2.5 rounded-lg border border-border/50 text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                      {/* Thumbnail preview */}
-                      {entry.url.trim() && (
-                        <div className="relative w-20 h-14 rounded-md overflow-hidden border border-border/30 bg-background">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={entry.url}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display =
-                                "none";
-                            }}
-                          />
-                          {entry.is_cover && (
-                            <span className="absolute top-0.5 left-0.5 text-[9px] bg-yellow-500 text-black font-bold px-1 rounded">
-                              CAPA
-                            </span>
-                          )}
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImageIcon className="w-8 h-8 text-muted-foreground/40" />
                         </div>
                       )}
-                    </div>
-                  </div>
-                ))}
 
-                <button
-                  type="button"
-                  onClick={addLinkField}
-                  className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Adicionar mais fotos
-                </button>
+                      {/* Delete button - always visible on mobile, hover on desktop */}
+                      <button
+                        type="button"
+                        onClick={() => removeMediaItem(index)}
+                        className="absolute top-1 right-1 w-7 h-7 rounded-full bg-red-500/90 text-white flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      {/* Cover badge / Set cover button */}
+                      {entry.is_cover ? (
+                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold">
+                          CAPA
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setMediaCover(index)}
+                          className="absolute top-1 left-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        >
+                          <Star className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
-          </div>
 
-          {/* Upload progress */}
-          {uploadProgress && (
-            <div className="flex items-center gap-2 justify-center text-sm text-emerald-400">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {uploadProgress}
+            {/* Add media buttons */}
+            <div className="flex flex-col gap-3">
+              {/* Upload area */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                  isDragOver
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-border/50 hover:border-emerald-500/40 hover:bg-emerald-500/5"
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Upload className="w-5 h-5 text-emerald-500/60" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Arraste ou{" "}
+                  <span className="text-emerald-400 font-medium">clique para enviar</span>
+                </p>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Fotos até 10MB · Vídeos até 100MB
+                </p>
+              </div>
+
+              {/* Link input */}
+              {showLinkInput ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addLinkMedia())}
+                    placeholder="Cole o link da imagem ou vídeo..."
+                    className={inputClass}
+                    autoFocus
+                  />
+                  <Button type="button" onClick={addLinkMedia} size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white shrink-0">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button type="button" onClick={() => { setShowLinkInput(false); setLinkUrl(""); }} size="sm" variant="outline" className="shrink-0">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowLinkInput(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm text-muted-foreground border border-border/30 hover:border-border/60 transition-colors"
+                >
+                  <Link2 className="w-4 h-4" />
+                  Colar link de mídia
+                </button>
+              )}
             </div>
-          )}
+
+            {uploadProgress && (
+              <p className="text-sm text-emerald-400 text-center animate-pulse">
+                {uploadProgress}
+              </p>
+            )}
+          </div>
 
           {/* Error message */}
           {error && (
