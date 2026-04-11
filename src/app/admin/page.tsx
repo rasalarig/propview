@@ -41,59 +41,63 @@ export default async function AdminPage() {
   return (
     <div className="pt-16 pb-16 px-4">
       <div className="container mx-auto max-w-5xl">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Painel Admin</h1>
-            <p className="text-muted-foreground mt-1">
-              {properties.length} imóveis cadastrados
-            </p>
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Painel Admin</h1>
+              <p className="text-muted-foreground mt-1">
+                {properties.length} imóveis cadastrados
+              </p>
+            </div>
+            <Link href="/admin/cadastro">
+              <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Novo Imóvel</span>
+                <span className="sm:hidden">Novo</span>
+              </Button>
+            </Link>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             <Link href="/admin/configuracoes">
-              <Button variant="outline" size="sm" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
-                <Settings className="w-4 h-4 mr-2" />
-                Configurações
+              <Button variant="outline" size="sm" className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs px-2">
+                <Settings className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">Config</span>
               </Button>
             </Link>
             <Link href="/admin/usuarios">
-              <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
-                <Shield className="w-4 h-4 mr-2" />
-                Usuários
+              <Button variant="outline" size="sm" className="w-full border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 text-xs px-2">
+                <Shield className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">Usuários</span>
               </Button>
             </Link>
             <Link href="/admin/violacoes">
-              <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10">
-                <ShieldAlert className="w-4 h-4 mr-2" />
-                Violações
+              <Button variant="outline" size="sm" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs px-2">
+                <ShieldAlert className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">Violações</span>
               </Button>
             </Link>
             <Link href="/admin/leads">
-              <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
-                <Users className="w-4 h-4 mr-2" />
-                Leads
+              <Button variant="outline" size="sm" className="w-full border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 text-xs px-2 relative">
+                <Users className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">Leads</span>
                 {newLeadsCount > 0 && (
-                  <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-emerald-500 text-white">
+                  <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-emerald-500 text-white leading-none">
                     {newLeadsCount}
                   </span>
                 )}
               </Button>
             </Link>
             <Link href="/admin/conversas">
-              <Button variant="outline" size="sm" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Conversas
+              <Button variant="outline" size="sm" className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10 text-xs px-2">
+                <MessageCircle className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">Conversas</span>
               </Button>
             </Link>
             <Link href="/campanhas">
-              <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
-                <Megaphone className="w-4 h-4 mr-2" />
-                Campanhas
-              </Button>
-            </Link>
-            <Link href="/admin/cadastro">
-              <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Imóvel
+              <Button variant="outline" size="sm" className="w-full border-purple-500/30 text-purple-400 hover:bg-purple-500/10 text-xs px-2">
+                <Megaphone className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">Campanhas</span>
               </Button>
             </Link>
           </div>
