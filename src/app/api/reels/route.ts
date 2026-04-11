@@ -12,7 +12,7 @@ export async function GET() {
           'is_cover', pi.is_cover
         )) FROM property_images pi WHERE pi.property_id = p.id), '[]'::json) as images
       FROM properties p
-      WHERE p.status = 'active'
+      WHERE p.status = 'active' AND (p.media_status = 'ready' OR p.media_status IS NULL)
       ORDER BY RANDOM()`
     );
 

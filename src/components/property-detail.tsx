@@ -137,7 +137,6 @@ export function PropertyDetail({ property }: PropertyProps) {
                     loop
                     playsInline
                     preload="auto"
-                    crossOrigin="anonymous"
                   />
                 ) : (
                   <div className="absolute inset-0">

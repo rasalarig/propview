@@ -447,6 +447,10 @@ export default function EditarImovelPage() {
         for (const entry of filesToUpload) {
           bgFormData.append("files", entry.file!);
         }
+        const coverFileIndex = filesToUpload.findIndex((e) => e.is_cover);
+        if (coverFileIndex >= 0) {
+          bgFormData.append("coverIndex", String(coverFileIndex));
+        }
         fetch("/api/upload/background", { method: "POST", body: bgFormData });
       }
 
@@ -812,7 +816,6 @@ export default function EditarImovelPage() {
                               preload="metadata"
                               muted
                               playsInline
-                              crossOrigin="anonymous"
                             />
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                               <Play className="w-8 h-8 text-white/70" />

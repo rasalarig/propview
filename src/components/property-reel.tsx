@@ -242,7 +242,6 @@ export function PropertyReel({
                   playsInline
                   preload="auto"
                   autoPlay={index === currentImageIndex}
-                  crossOrigin="anonymous"
                 />
               );
             }

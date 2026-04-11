@@ -41,7 +41,6 @@ export function PropertyCard({ id, title, price, area, city, state, type, charac
                 muted
                 playsInline
                 preload="auto"
-                crossOrigin="anonymous"
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">

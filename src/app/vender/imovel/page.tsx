@@ -404,6 +404,8 @@ export default function CadastrarImovelPage() {
         for (const entry of filesToUpload) {
           bgFormData.append("files", entry.file!);
         }
+        const coverFileIndex = filesToUpload.findIndex((e) => e.is_cover);
+        bgFormData.append("coverIndex", String(coverFileIndex));
         fetch("/api/upload/background", { method: "POST", body: bgFormData });
       }
 

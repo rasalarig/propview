@@ -25,10 +25,14 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     propertyId = formData.get('propertyId') as string;
     const files = formData.getAll('files') as File[];
+    const coverIndex = parseInt(formData.get('coverIndex') as string ?? '-1', 10);
 
     if (!propertyId || !files.length) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
     }
+
+    let successCount = 0;
+    let fileIndex = 0;
 
     for (const file of files) {
       const isImage = ALLOWED_IMAGE.includes(file.type);
@@ -39,40 +43,48 @@ export async function POST(request: NextRequest) {
       const maxSize = isVideo ? MAX_SIZE_VIDEO : MAX_SIZE_IMAGE;
       if (file.size > maxSize) continue;
 
-      const bytes = await file.arrayBuffer();
-      let buffer = Buffer.from(bytes);
-      const originalExt = file.name.split('.').pop()?.toLowerCase() || 'bin';
+      try {
+        const bytes = await file.arrayBuffer();
+        let buffer = Buffer.from(bytes);
+        const originalExt = file.name.split('.').pop()?.toLowerCase() || 'bin';
 
-      let key: string;
-      let contentType = file.type;
+        let key: string;
+        let contentType = file.type;
 
-      if (isVideo && originalExt !== 'mp4') {
-        const converted = await convertToMp4(buffer, originalExt);
-        buffer = converted.buffer;
-        contentType = converted.contentType;
-        key = `${randomUUID()}.mp4`;
-      } else {
-        key = `${randomUUID()}.${originalExt}`;
+        if (isVideo && originalExt !== 'mp4') {
+          const converted = await convertToMp4(buffer, originalExt);
+          buffer = converted.buffer;
+          contentType = converted.contentType;
+          key = `${randomUUID()}.mp4`;
+        } else {
+          key = `${randomUUID()}.${originalExt}`;
+        }
+
+        const url = await uploadToR2(buffer, key, contentType);
+
+        await query(
+          `INSERT INTO property_images (property_id, filename, original_name, is_cover)
+           VALUES ($1, $2, $3, $4)`,
+          [propertyId, url, file.name, fileIndex === coverIndex ? 1 : 0]
+        );
+
+        successCount++;
+      } catch (fileError) {
+        console.error(`Failed to process file: ${file.name}`, fileError);
       }
 
-      const url = await uploadToR2(buffer, key, contentType);
-
-      await query(
-        `INSERT INTO property_images (property_id, filename, original_name, is_cover)
-         VALUES ($1, $2, $3, $4)`,
-        [propertyId, url, file.name, 0]
-      );
+      fileIndex++;
     }
 
-    // Mark property as ready
-    await query('UPDATE properties SET media_status = $1 WHERE id = $2', ['ready', propertyId]);
+    // Set status based on results: error only if every file failed
+    const finalStatus = successCount > 0 ? 'ready' : 'error';
+    await query('UPDATE properties SET media_status = $1 WHERE id = $2', [finalStatus, propertyId]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Background upload error:', error);
-    // Always mark as ready so property doesn't get stuck
     if (propertyId) {
-      await query('UPDATE properties SET media_status = $1 WHERE id = $2', ['ready', propertyId]).catch(() => {});
+      await query('UPDATE properties SET media_status = $1 WHERE id = $2', ['error', propertyId]).catch(() => {});
     }
     return NextResponse.json({ error: 'Falha no upload' }, { status: 500 });
   }
