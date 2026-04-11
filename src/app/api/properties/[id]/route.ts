@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, getOne } from '@/lib/db';
+import { query, getOne, getAll } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { deleteFromR2 } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,10 +146,17 @@ export async function PUT(
 
     // Handle image updates if imageUrls is provided
     if (imageUrls && Array.isArray(imageUrls)) {
-      // Delete existing images
+      // Fetch old filenames before deleting from DB
+      const oldImages = await getAll(
+        'SELECT filename FROM property_images WHERE property_id = $1',
+        [params.id]
+      ) as { filename: string }[];
+
+      // Delete existing DB records
       await query('DELETE FROM property_images WHERE property_id = $1', [params.id]);
 
       // Insert new images
+      const newUrls = new Set(imageUrls.map((img: { url: string }) => img.url.trim()));
       for (const img of imageUrls) {
         if (img.url && img.url.trim()) {
           await query(
@@ -160,6 +168,15 @@ export async function PUT(
               img.url.trim().split('/').pop() || 'image',
               img.is_cover ? 1 : 0,
             ]
+          );
+        }
+      }
+
+      // Delete removed files from R2 (fire-and-forget, don't block response)
+      for (const old of oldImages) {
+        if (old.filename && !newUrls.has(old.filename)) {
+          deleteFromR2(old.filename).catch((err) =>
+            console.error('Failed to delete from R2:', old.filename, err)
           );
         }
       }
@@ -216,7 +233,22 @@ export async function DELETE(
     const ownership = await verifyOwnership(params.id);
     if (ownership.error) return ownership.error;
 
+    // Fetch filenames before deleting
+    const images = await getAll(
+      'SELECT filename FROM property_images WHERE property_id = $1',
+      [params.id]
+    ) as { filename: string }[];
+
     await query('DELETE FROM properties WHERE id = $1', [params.id]);
+
+    // Clean up R2 files (fire-and-forget)
+    for (const img of images) {
+      if (img.filename) {
+        deleteFromR2(img.filename).catch((err) =>
+          console.error('Failed to delete from R2:', img.filename, err)
+        );
+      }
+    }
 
     return NextResponse.json({ message: 'Imóvel excluído com sucesso' });
   } catch (error) {
