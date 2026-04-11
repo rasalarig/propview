@@ -17,6 +17,7 @@ import {
   Video,
   X,
   Play,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -123,6 +124,7 @@ export default function CadastrarImovelPage() {
   const [success, setSuccess] = useState<{ id: number } | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [acceptingTerms, setAcceptingTerms] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -275,6 +277,47 @@ export default function CadastrarImovelPage() {
     },
     [addFiles]
   );
+
+  const generateWithAI = async () => {
+    setAiGenerating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/ai/generate-listing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: propertyType,
+          area,
+          price,
+          city,
+          state,
+          neighborhood,
+          address,
+          characteristics: selectedChars,
+          bedrooms,
+          bathrooms,
+          garage: parking,
+          pool: selectedChars.includes("piscina"),
+          gatedCommunity: selectedChars.includes("condomínio fechado"),
+          pavedStreet: selectedChars.includes("asfalto"),
+          currentTitle: title,
+          currentDescription: description,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao gerar com IA");
+      }
+
+      const data = await res.json();
+      if (data.title) setTitle(data.title);
+      if (data.description) setDescription(data.description);
+    } catch {
+      setError("Não foi possível gerar o texto com IA. Tente novamente.");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   const acceptTerms = async () => {
     setAcceptingTerms(true);
@@ -598,16 +641,34 @@ export default function CadastrarImovelPage() {
             </div>
 
             <div>
-              <label className={labelClass}>
-                Descrição <span className="text-red-400">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-foreground">
+                  Descrição <span className="text-red-400">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={generateWithAI}
+                  disabled={aiGenerating}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+                >
+                  {aiGenerating ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  {aiGenerating ? "Gerando..." : "Gerar com IA"}
+                </button>
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva o imóvel em detalhes..."
+                placeholder="Descreva o imóvel em detalhes ou clique em 'Gerar com IA' para criar automaticamente..."
                 rows={4}
                 className={inputClass}
               />
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Preencha os campos acima e clique em &quot;Gerar com IA&quot; para criar título e descrição automaticamente.
+              </p>
             </div>
 
             <div>
