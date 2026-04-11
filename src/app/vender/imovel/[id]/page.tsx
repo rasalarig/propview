@@ -429,7 +429,6 @@ export default function EditarImovelPage() {
           characteristics: selectedChars.length > 0 ? selectedChars : null,
           details: Object.keys(details).length > 0 ? details : null,
           imageUrls: allImageUrls,
-          media_status: hasFilesToUpload ? "processing" : undefined,
         }),
       });
 

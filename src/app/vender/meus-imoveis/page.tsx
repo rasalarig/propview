@@ -18,9 +18,10 @@ import {
   Pencil,
   ThermometerSun,
   ArrowRight,
+  Play,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import { isVideoUrl, resolveMediaUrl } from "@/lib/media-utils";
 
 interface PropertyImage {
   id: number;
@@ -250,13 +251,27 @@ export default function MeusImoveisPage() {
                 >
                   {/* Cover Image */}
                   <div className="relative h-48 w-full">
-                    {coverUrl ? (
-                      <Image
-                        src={coverUrl}
+                    {coverUrl && isVideoUrl(resolveMediaUrl(coverUrl)) ? (
+                      <div className="relative w-full h-full">
+                        <video
+                          src={resolveMediaUrl(coverUrl)}
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+                            <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : coverUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={resolveMediaUrl(coverUrl)}
                         alt={property.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-emerald-900/40 to-teal-900/40 flex items-center justify-center">
