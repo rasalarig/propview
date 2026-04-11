@@ -35,7 +35,7 @@ export function ReelsFeed() {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 20000);
-        const res = await fetch("/api/reels", { signal: controller.signal });
+        const res = await fetch("/api/reels", { signal: controller.signal, cache: "no-store" });
         clearTimeout(timeout);
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOne, getAll } from '@/lib/db';
 import { checkAlertsForProperty } from '@/lib/alerts';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const properties = await getAll(
