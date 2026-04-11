@@ -254,7 +254,7 @@ export default function MeusImoveisPage() {
                     {coverUrl && isVideoUrl(resolveMediaUrl(coverUrl)) ? (
                       <div className="relative w-full h-full">
                         <video
-                          src={resolveMediaUrl(coverUrl)}
+                          src={`${resolveMediaUrl(coverUrl)}#t=0.1`}
                           className="w-full h-full object-cover"
                           muted
                           playsInline

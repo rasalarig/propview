@@ -141,7 +141,7 @@ export function FavoritesPage() {
                     {property.coverImage && isVideoUrl(resolveMediaUrl(property.coverImage)) ? (
                       <div className="relative w-full h-full">
                         <video
-                          src={resolveMediaUrl(property.coverImage)}
+                          src={`${resolveMediaUrl(property.coverImage)}#t=0.1`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           muted
                           playsInline
