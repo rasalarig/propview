@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogIn, LogOut, Heart, Film, Home, Crown, User } from "lucide-react";
+import { LogIn, LogOut, Heart, Film, Home } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 
 export function PremiumNavbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { user, loading, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -25,24 +24,36 @@ export function PremiumNavbar() {
   const handleLogout = async () => {
     await logout();
     setDropdownOpen(false);
-    setMobileOpen(false);
   };
 
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
   return (
+    <>
+    {/* Mobile Header */}
+    <header className="md:hidden fixed top-0 left-0 right-0 z-50 border-b border-amber-500/20 bg-[hsl(220,20%,4%)]/90 backdrop-blur-xl">
+      <div className="flex items-center justify-center h-14 px-4">
+        <Link href="/premium" className="flex items-center gap-2">
+          <div className="h-12 overflow-hidden flex items-center">
+            <img src="/logo_novo.png" alt="MelhorMetro" className="h-36 w-auto" />
+          </div>
+          <span className="text-[10px] font-semibold text-amber-500/70 tracking-[0.2em] uppercase">
+            Premium
+          </span>
+        </Link>
+      </div>
+    </header>
+
+    {/* Desktop Header */}
     <header className="hidden md:block fixed top-0 left-0 right-0 z-50 border-b border-amber-500/20 bg-[hsl(220,20%,4%)]/90 backdrop-blur-xl">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        <Link href="/premium" className="flex items-center gap-3 group">
-          <Crown className="w-8 h-8 text-amber-500" />
-          <div>
-            <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
-              MelhorMetro
-            </span>
-            <span className="text-xs font-semibold text-amber-500/70 block -mt-1 tracking-[0.2em] uppercase">
-              Premium
-            </span>
+        <Link href="/premium" className="flex items-center gap-2 group">
+          <div className="h-12 overflow-hidden flex items-center">
+            <img src="/logo_novo.png" alt="MelhorMetro" className="h-36 w-auto" />
           </div>
+          <span className="text-xs font-semibold text-amber-500/70 tracking-[0.2em] uppercase">
+            Premium
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
@@ -117,45 +128,8 @@ export function PremiumNavbar() {
           )}
         </nav>
 
-        <button className="md:hidden text-amber-100" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
       </div>
-
-      {mobileOpen && (
-        <div className="md:hidden border-t border-amber-500/20 bg-[hsl(220,20%,4%)]/95 backdrop-blur-xl">
-          <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
-            <Link href="/premium/imoveis" className="text-sm text-amber-100/60 py-2" onClick={() => setMobileOpen(false)}>Imóveis</Link>
-            <Link href="/premium/reels" className="text-sm text-amber-100/60 py-2 flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-              <Film className="w-3.5 h-3.5" /> Reels
-            </Link>
-            <div className="border-t border-amber-500/10 my-1" />
-            {!loading && user ? (
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center text-black text-sm font-bold">
-                    {getInitial(user.name)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-amber-100">{user.name}</p>
-                    <p className="text-xs text-amber-100/40">{user.email}</p>
-                  </div>
-                </div>
-                <button onClick={handleLogout} className="text-red-400 hover:text-red-300">
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <Link href="/premium/login" onClick={() => setMobileOpen(false)}>
-                <Button size="sm" className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-semibold">
-                  <LogIn className="w-3.5 h-3.5 mr-1" />
-                  Entrar
-                </Button>
-              </Link>
-            )}
-          </nav>
-        </div>
-      )}
     </header>
+    </>
   );
 }
