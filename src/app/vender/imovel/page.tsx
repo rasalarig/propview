@@ -351,16 +351,15 @@ export default function CadastrarImovelPage() {
     setSubmitting(true);
 
     try {
-      // Separate link URLs (available now) from files (need background upload)
+      // Upload files first (synchronous — wait for completion)
       let allImageUrls: { url: string; is_cover: boolean }[] = [];
 
       if (mediaTab === "link") {
         const validLinks = linkEntries.filter((e) => e.url.trim());
         allImageUrls = validLinks.map((e) => ({ url: e.url.trim(), is_cover: e.is_cover }));
+      } else {
+        allImageUrls = await uploadFiles();
       }
-
-      const filesToUpload = mediaTab === "upload" ? mediaEntries.filter((e) => e.file) : [];
-      const hasFilesToUpload = filesToUpload.length > 0;
 
       const details: Record<string, number> = {};
       if (showDetails) {
@@ -386,7 +385,7 @@ export default function CadastrarImovelPage() {
           characteristics: selectedChars.length > 0 ? selectedChars : null,
           details: Object.keys(details).length > 0 ? details : null,
           imageUrls: allImageUrls,
-          media_status: hasFilesToUpload ? "processing" : "ready",
+          media_status: "ready",
         }),
       });
 
@@ -395,18 +394,6 @@ export default function CadastrarImovelPage() {
       if (!res.ok) {
         setError(data.error || "Erro ao cadastrar imóvel.");
         return;
-      }
-
-      // Fire background upload (don't await)
-      if (hasFilesToUpload) {
-        const bgFormData = new FormData();
-        bgFormData.append("propertyId", String(data.property.id));
-        for (const entry of filesToUpload) {
-          bgFormData.append("files", entry.file!);
-        }
-        const coverFileIndex = filesToUpload.findIndex((e) => e.is_cover);
-        bgFormData.append("coverIndex", String(coverFileIndex));
-        fetch("/api/upload/background", { method: "POST", body: bgFormData });
       }
 
       setSuccess({ id: data.property.id });

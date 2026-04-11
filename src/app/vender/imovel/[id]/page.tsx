@@ -398,12 +398,15 @@ export default function EditarImovelPage() {
     setSubmitting(true);
 
     try {
-      // Separate existing URLs from new files
-      const existingItems = mediaItems.filter((e) => e.url && !e.file);
-      const allImageUrls = existingItems.map((e) => ({ url: e.url, is_cover: e.is_cover }));
+      // Upload new files first (synchronous — wait for completion)
+      const uploadedUrls = await uploadFiles();
 
-      const filesToUpload = mediaItems.filter((e) => e.file);
-      const hasFilesToUpload = filesToUpload.length > 0;
+      // Combine existing URLs with newly uploaded URLs
+      const existingItems = mediaItems.filter((e) => e.url && !e.file);
+      const allImageUrls = [
+        ...existingItems.map((e) => ({ url: e.url, is_cover: e.is_cover })),
+        ...uploadedUrls,
+      ];
 
       const details: Record<string, number> = {};
       if (showDetails) {
@@ -437,20 +440,6 @@ export default function EditarImovelPage() {
       if (!res.ok) {
         setError(data.error || "Erro ao salvar alterações.");
         return;
-      }
-
-      // Fire background upload (don't await)
-      if (hasFilesToUpload) {
-        const bgFormData = new FormData();
-        bgFormData.append("propertyId", propertyId);
-        for (const entry of filesToUpload) {
-          bgFormData.append("files", entry.file!);
-        }
-        const coverFileIndex = filesToUpload.findIndex((e) => e.is_cover);
-        if (coverFileIndex >= 0) {
-          bgFormData.append("coverIndex", String(coverFileIndex));
-        }
-        fetch("/api/upload/background", { method: "POST", body: bgFormData });
       }
 
       setSuccess(true);
