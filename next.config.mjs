@@ -51,7 +51,7 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-    NEXT_PUBLIC_GOOGLE_MAPS_KEY: 'AIzaSyAScwDctQIbOjJgdqZdWinSBWen015GnCU',
+    NEXT_PUBLIC_GOOGLE_MAPS_KEY: process.env.GOOGLE_MAPS_KEY,
   },
 };
 
