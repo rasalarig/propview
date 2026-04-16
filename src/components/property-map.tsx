@@ -1,7 +1,18 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { GoogleMap, useJsApiLoader, Marker, Circle, InfoWindow } from "@react-google-maps/api";
+import "leaflet/dist/leaflet.css";
+import { useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
+import L from "leaflet";
+
+// Fix default Leaflet icon broken in bundlers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 export type PoiCategory =
   | "education"
@@ -34,47 +45,44 @@ const POI_CONFIGS: Record<PoiCategory, POI_CONFIG> = {
   food:      { color: "#eab308", letter: "A", label: "Alimentação" },
 };
 
-const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#212121" }] },
-  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
-  { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#757575" }] },
-  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
-  { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#383838" }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212121" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#1a3a4a" }] },
-];
-
 function formatDistance(meters: number): string {
   if (meters >= 1000) return `${(meters / 1000).toFixed(1)}km`;
   return `${meters}m`;
 }
 
-// Build a colored circle SVG data URL for POI markers
-function makePOIIcon(category: PoiCategory): google.maps.Icon {
-  const cfg = POI_CONFIGS[category];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28">
-    <circle cx="14" cy="14" r="13" fill="${cfg.color}" stroke="rgba(255,255,255,0.8)" stroke-width="2"/>
-    <text x="14" y="19" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Arial,sans-serif">${cfg.letter}</text>
-  </svg>`;
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(28, 28),
-    anchor: new window.google.maps.Point(14, 14),
-  };
+function makeDivIcon(color: string, letter: string, size = 28): L.DivIcon {
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${color};border:2px solid rgba(255,255,255,0.85);
+      display:flex;align-items:center;justify-content:center;
+      font-size:${size * 0.43}px;font-weight:700;color:#fff;
+      font-family:Arial,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,0.5);
+    ">${letter}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -(size / 2)],
+  });
 }
 
-function makePropertyIcon(): google.maps.Icon {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="38" height="38">
-    <circle cx="19" cy="19" r="17" fill="#10b981" stroke="rgba(255,255,255,0.9)" stroke-width="3"/>
-    <text x="19" y="25" text-anchor="middle" font-size="18" font-family="Arial,sans-serif">🏠</text>
-  </svg>`;
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(38, 38),
-    anchor: new window.google.maps.Point(19, 19),
-  };
+const propertyIcon = makeDivIcon("#10b981", "🏠", 36);
+
+function makePOIIcon(category: PoiCategory): L.DivIcon {
+  const cfg = POI_CONFIGS[category];
+  return makeDivIcon(cfg.color, cfg.letter, 28);
+}
+
+// Sub-component that can call useMap() to fly to a POI
+interface FlyControllerProps {
+  target: { lat: number; lng: number; zoom: number } | null;
+}
+function FlyController({ target }: FlyControllerProps) {
+  const map = useMap();
+  if (target) {
+    map.flyTo([target.lat, target.lng], target.zoom, { duration: 0.8 });
+  }
+  return null;
 }
 
 interface PropertyMapProps {
@@ -96,14 +104,7 @@ export default function PropertyMap({
   approximate_radius_km = 1.0,
   pois = [],
 }: PropertyMapProps) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
-    id: "google-map-script",
-  });
-
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
-  const [showPropertyInfo, setShowPropertyInfo] = useState(false);
+  const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
   const [openCategories, setOpenCategories] = useState<Record<PoiCategory, boolean>>({
     education: true,
     health: true,
@@ -113,10 +114,6 @@ export default function PropertyMap({
     food: true,
   });
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
-
   if (!latitude || !longitude) {
     return (
       <div className="h-[300px] rounded-xl border border-border/50 bg-card flex items-center justify-center text-muted-foreground">
@@ -125,26 +122,10 @@ export default function PropertyMap({
     );
   }
 
-  if (loadError) {
-    return (
-      <div className="h-[300px] rounded-xl border border-border/50 bg-card flex items-center justify-center text-muted-foreground">
-        <p className="text-sm">Erro ao carregar o mapa</p>
-      </div>
-    );
-  }
-
-  if (!isLoaded) {
-    return (
-      <div className="h-[360px] rounded-xl border border-border/50 bg-card flex items-center justify-center text-muted-foreground">
-        <p className="text-sm">Carregando mapa...</p>
-      </div>
-    );
-  }
-
   const isApproximate = address_privacy === "approximate";
   const radiusMeters = (approximate_radius_km ?? 1.0) * 1000;
   const hasPois = pois.length > 0;
-  const center = { lat: latitude, lng: longitude };
+  const center: [number, number] = [latitude, longitude];
   const defaultZoom = hasPois ? 14 : isApproximate ? 13 : 15;
 
   // Group POIs by category
@@ -159,61 +140,48 @@ export default function PropertyMap({
   };
 
   const flyToPoi = (poi: POI) => {
-    if (mapRef.current) {
-      mapRef.current.panTo({ lat: poi.lat, lng: poi.lng });
-      mapRef.current.setZoom(16);
-    }
-    setSelectedPoi(poi);
+    setFlyTarget({ lat: poi.lat, lng: poi.lng, zoom: 16 });
   };
 
   return (
     <div className="space-y-3">
       {/* Map */}
-      <div className="h-[360px] rounded-xl border border-border/50 overflow-hidden">
-        <GoogleMap
-          mapContainerStyle={{ height: "100%", width: "100%" }}
+      <div className={`${hasPois ? "h-[360px]" : "h-[300px]"} rounded-xl border border-border/50 overflow-hidden`}>
+        <MapContainer
           center={center}
           zoom={defaultZoom}
-          onLoad={onMapLoad}
-          options={{
-            styles: darkMapStyle,
-            scrollwheel: false,
-            disableDefaultUI: false,
-            zoomControl: true,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
-          }}
+          scrollWheelZoom={false}
+          style={{ height: "100%", width: "100%" }}
         >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+
+          <FlyController target={flyTarget} />
+
           {/* Property marker or approximate circle */}
           {isApproximate ? (
             <Circle
               center={center}
               radius={radiusMeters}
-              options={{
-                strokeColor: "#10b981",
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
+              pathOptions={{
+                color: "#10b981",
+                weight: 2,
+                opacity: 0.8,
                 fillColor: "#10b981",
                 fillOpacity: 0.2,
               }}
             />
           ) : (
-            <Marker
-              position={center}
-              icon={makePropertyIcon()}
-              onClick={() => setShowPropertyInfo(true)}
-            >
-              {showPropertyInfo && (title || address) && (
-                <InfoWindow
-                  position={center}
-                  onCloseClick={() => setShowPropertyInfo(false)}
-                >
-                  <div style={{ color: "#111", maxWidth: 200 }}>
+            <Marker position={center} icon={propertyIcon}>
+              {(title || address) && (
+                <Popup>
+                  <div style={{ maxWidth: 200 }}>
                     {title && <strong>{title}</strong>}
                     {address && <p style={{ fontSize: 12, marginTop: 4 }}>{address}</p>}
                   </div>
-                </InfoWindow>
+                </Popup>
               )}
             </Marker>
           )}
@@ -222,30 +190,21 @@ export default function PropertyMap({
           {pois.map((poi, i) => (
             <Marker
               key={`poi-${i}`}
-              position={{ lat: poi.lat, lng: poi.lng }}
+              position={[poi.lat, poi.lng]}
               icon={makePOIIcon(poi.category)}
-              onClick={() => {
-                setSelectedPoi(poi);
-                setShowPropertyInfo(false);
-              }}
             >
-              {selectedPoi === poi && (
-                <InfoWindow
-                  position={{ lat: poi.lat, lng: poi.lng }}
-                  onCloseClick={() => setSelectedPoi(null)}
-                >
-                  <div style={{ color: "#111", maxWidth: 200 }}>
-                    <strong>{poi.name}</strong>
-                    <p style={{ fontSize: 12, marginTop: 4 }}>
-                      {POI_CONFIGS[poi.category].label} &bull;{" "}
-                      {formatDistance(poi.distance_meters)}
-                    </p>
-                  </div>
-                </InfoWindow>
-              )}
+              <Popup>
+                <div style={{ maxWidth: 200 }}>
+                  <strong>{poi.name}</strong>
+                  <p style={{ fontSize: 12, marginTop: 4 }}>
+                    {POI_CONFIGS[poi.category].label} &bull;{" "}
+                    {formatDistance(poi.distance_meters)}
+                  </p>
+                </div>
+              </Popup>
             </Marker>
           ))}
-        </GoogleMap>
+        </MapContainer>
       </div>
 
       {/* Legend (only when there are POIs) */}

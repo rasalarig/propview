@@ -1,21 +1,20 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import "leaflet/dist/leaflet.css";
+import { useState } from "react";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import L from "leaflet";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
-const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#212121" }] },
-  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
-  { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#757575" }] },
-  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
-  { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#383838" }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212121" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#1a3a4a" }] },
-];
+// Fix default Leaflet icon broken in bundlers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 interface MapPickerProps {
   latitude: number | null;
@@ -23,47 +22,47 @@ interface MapPickerProps {
   onChange: (coords: { lat: number | null; lng: number | null }) => void;
 }
 
+// Handles map click events to set marker position
+interface ClickHandlerProps {
+  onMapClick: (lat: number, lng: number) => void;
+}
+function ClickHandler({ onMapClick }: ClickHandlerProps) {
+  useMapEvents({
+    click(e) {
+      const newLat = Math.round(e.latlng.lat * 10000) / 10000;
+      const newLng = Math.round(e.latlng.lng * 10000) / 10000;
+      onMapClick(newLat, newLng);
+    },
+  });
+  return null;
+}
+
+// Pans the map when manual coords are entered
+interface PanControllerProps {
+  target: { lat: number; lng: number } | null;
+}
+function PanController({ target }: PanControllerProps) {
+  const map = useMap();
+  if (target) {
+    map.panTo([target.lat, target.lng]);
+  }
+  return null;
+}
+
 export default function MapPicker({
   latitude,
   longitude,
   onChange,
 }: MapPickerProps) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
-    id: "google-map-script",
-  });
-
-  const mapRef = useRef<google.maps.Map | null>(null);
   const [lat, setLat] = useState<string>(latitude?.toString() || "");
   const [lng, setLng] = useState<string>(longitude?.toString() || "");
+  const [panTarget, setPanTarget] = useState<{ lat: number; lng: number } | null>(null);
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-  }, []);
-
-  const handleMapClick = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
-      const newLat = Math.round(e.latLng.lat() * 10000) / 10000;
-      const newLng = Math.round(e.latLng.lng() * 10000) / 10000;
-      setLat(newLat.toString());
-      setLng(newLng.toString());
-      onChange({ lat: newLat, lng: newLng });
-    },
-    [onChange]
-  );
-
-  const handleMarkerDrag = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
-      const newLat = Math.round(e.latLng.lat() * 10000) / 10000;
-      const newLng = Math.round(e.latLng.lng() * 10000) / 10000;
-      setLat(newLat.toString());
-      setLng(newLng.toString());
-      onChange({ lat: newLat, lng: newLng });
-    },
-    [onChange]
-  );
+  const handleMapClick = (newLat: number, newLng: number) => {
+    setLat(newLat.toString());
+    setLng(newLng.toString());
+    onChange({ lat: newLat, lng: newLng });
+  };
 
   const handleManualChange = (field: "lat" | "lng", value: string) => {
     if (field === "lat") {
@@ -77,16 +76,13 @@ export default function MapPicker({
     const validLng = isNaN(numLng) ? null : numLng;
     onChange({ lat: validLat, lng: validLng });
     // Pan map to manual coords if both valid
-    if (validLat !== null && validLng !== null && mapRef.current) {
-      mapRef.current.panTo({ lat: validLat, lng: validLng });
+    if (validLat !== null && validLng !== null) {
+      setPanTarget({ lat: validLat, lng: validLng });
     }
   };
 
-  const center = {
-    lat: latitude || -23.5,
-    lng: longitude || -48.0,
-  };
-
+  const centerLat = latitude || -23.5;
+  const centerLng = longitude || -48.0;
   const defaultZoom = latitude && longitude ? 15 : 8;
 
   return (
@@ -97,40 +93,36 @@ export default function MapPicker({
       </div>
 
       <div className="h-64 rounded-xl border border-border/50 overflow-hidden">
-        {loadError ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground">
-            <p className="text-sm">Erro ao carregar o mapa</p>
-          </div>
-        ) : !isLoaded ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground bg-card">
-            <p className="text-sm">Carregando mapa...</p>
-          </div>
-        ) : (
-          <GoogleMap
-            mapContainerStyle={{ height: "100%", width: "100%" }}
-            center={center}
-            zoom={defaultZoom}
-            onLoad={onMapLoad}
-            onClick={handleMapClick}
-            options={{
-              styles: darkMapStyle,
-              scrollwheel: false,
-              disableDefaultUI: false,
-              zoomControl: true,
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: false,
-            }}
-          >
-            {latitude && longitude && (
-              <Marker
-                position={{ lat: latitude, lng: longitude }}
-                draggable
-                onDragEnd={handleMarkerDrag}
-              />
-            )}
-          </GoogleMap>
-        )}
+        <MapContainer
+          center={[centerLat, centerLng]}
+          zoom={defaultZoom}
+          scrollWheelZoom={false}
+          style={{ height: "100%", width: "100%" }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          <ClickHandler onMapClick={handleMapClick} />
+          <PanController target={panTarget} />
+          {latitude && longitude && (
+            <Marker
+              position={[latitude, longitude]}
+              draggable
+              eventHandlers={{
+                dragend(e) {
+                  const marker = e.target as L.Marker;
+                  const pos = marker.getLatLng();
+                  const newLat = Math.round(pos.lat * 10000) / 10000;
+                  const newLng = Math.round(pos.lng * 10000) / 10000;
+                  setLat(newLat.toString());
+                  setLng(newLng.toString());
+                  onChange({ lat: newLat, lng: newLng });
+                },
+              }}
+            />
+          )}
+        </MapContainer>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

@@ -29,6 +29,56 @@ import { ReimaginePanelTrigger, ReimaginePanelDialog } from "./reimagine-panel";
 import { isVideoUrl, isExternalVideoUrl, resolveMediaUrl } from "@/lib/media-utils";
 import { useAuth } from "@/components/auth-provider";
 import { PropertyChat } from "@/components/property-chat";
+import { Eye, X as XIcon } from "lucide-react";
+
+function StreetViewSection({ lat, lng }: { lat: number; lng: number }) {
+  const [showStreetView, setShowStreetView] = useState(false);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "";
+
+  if (!apiKey) return null;
+
+  return (
+    <div className="mt-3">
+      {!showStreetView ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowStreetView(true)}
+          className="w-full border-border/50 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          Ver Street View (visão 360°)
+        </Button>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">Street View</p>
+            <button
+              onClick={() => setShowStreetView(false)}
+              className="p-1 rounded hover:bg-accent/50 text-muted-foreground"
+            >
+              <XIcon className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="rounded-xl overflow-hidden border border-border/50">
+            <iframe
+              src={`https://www.google.com/maps/embed/v1/streetview?location=${lat},${lng}&heading=210&pitch=10&fov=90&key=${apiKey}`}
+              width="100%"
+              height="300"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground/50 text-center">
+            Imagem do Google Street View. Pode não corresponder ao estado atual do local.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 import { SolarCompass } from "@/components/solar-compass";
 import { ValuationScore } from "@/components/valuation-score";
 import { calculateValuationScore } from "@/lib/valuation-score";
@@ -434,6 +484,9 @@ export function PropertyDetail({ property }: PropertyProps) {
                 address_privacy={property.address_privacy}
                 approximate_radius_km={property.approximate_radius_km}
               />
+              {property.latitude != null && property.longitude != null && property.address_privacy !== "approximate" && (
+                <StreetViewSection lat={property.latitude} lng={property.longitude} />
+              )}
             </div>
 
             {/* Solar orientation section */}

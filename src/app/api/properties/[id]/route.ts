@@ -4,23 +4,31 @@ import { getCurrentUser } from '@/lib/auth';
 import { deleteFromR2 } from '@/lib/r2';
 
 async function geocodeAddress(address: string, city: string, state: string): Promise<{ lat: number; lng: number } | null> {
+  const googleKey = process.env.GOOGLE_MAPS_KEY;
+  if (googleKey) {
+    try {
+      const q = encodeURIComponent(`${address}, ${city}, ${state}, Brasil`);
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${q}&key=${googleKey}`);
+      if (res.ok) {
+        const data = await res.json();
+        const loc = data.results?.[0]?.geometry?.location;
+        if (loc) return { lat: loc.lat, lng: loc.lng };
+      }
+    } catch (err) {
+      console.error('[Geocode Google] Error:', err);
+    }
+  }
   try {
     const q = encodeURIComponent(`${address}, ${city}, ${state}, Brasil`);
     const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`, {
       headers: { 'User-Agent': 'MelhorMetro/1.0' },
     });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    const q2 = encodeURIComponent(`${city}, ${state}, Brasil`);
-    const res2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${q2}&format=json&limit=1&countrycodes=br`, {
-      headers: { 'User-Agent': 'MelhorMetro/1.0' },
-    });
-    if (!res2.ok) return null;
-    const data2 = await res2.json();
-    if (data2[0]) return { lat: parseFloat(data2[0].lat), lng: parseFloat(data2[0].lon) };
+    if (res.ok) {
+      const data = await res.json();
+      if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
   } catch (err) {
-    console.error('[Geocode] Error:', err);
+    console.error('[Geocode Nominatim] Error:', err);
   }
   return null;
 }
