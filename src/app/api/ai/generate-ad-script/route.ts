@@ -60,7 +60,7 @@ Responda EXATAMENTE neste formato JSON:
   "headline": "Frase de impacto para título do anúncio (máx 100 caracteres)",
   "portal_description": "Texto persuasivo de 3-4 parágrafos para portais imobiliários (OLX, ZAP, VivaReal). Linguagem profissional, destaque diferenciais, inclua call-to-action. Sem emojis.",
   "social_media_caption": "Texto para post no Instagram/Facebook. Use emojis com estratégia, hashtags relevantes, linguagem envolvente. Máximo 300 palavras. Inclua call-to-action.",
-  "video_script": "Roteiro de vídeo de 30-60 segundos para Reels/TikTok. Formato: [CENA 1] descrição do que mostrar + o que falar... [CENA 2]... etc. Linguagem dinâmica, abra com gancho que prende atenção."
+  "video_script": "Roteiro de vídeo de 30-60 segundos para Tours/TikTok. Formato: [CENA 1] descrição do que mostrar + o que falar... [CENA 2]... etc. Linguagem dinâmica, abra com gancho que prende atenção."
 }`;
 }
 

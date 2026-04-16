@@ -453,7 +453,7 @@ export function PropertyDetail({ property }: PropertyProps) {
             {/* Valuation Score */}
             <Separator className="bg-border/50" />
             <div>
-              <h3 className="text-lg font-semibold mb-4">Potencial de Valorização</h3>
+              <h3 className="text-lg font-semibold mb-4">Índice de Valorização Imobiliária</h3>
               <ValuationScore result={calculateValuationScore(property)} />
             </div>
           </div>

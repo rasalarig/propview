@@ -3,6 +3,28 @@ import { query, getOne, getAll } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { deleteFromR2 } from '@/lib/r2';
 
+async function geocodeAddress(address: string, city: string, state: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const q = encodeURIComponent(`${address}, ${city}, ${state}, Brasil`);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`, {
+      headers: { 'User-Agent': 'MelhorMetro/1.0' },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    const q2 = encodeURIComponent(`${city}, ${state}, Brasil`);
+    const res2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${q2}&format=json&limit=1&countrycodes=br`, {
+      headers: { 'User-Agent': 'MelhorMetro/1.0' },
+    });
+    if (!res2.ok) return null;
+    const data2 = await res2.json();
+    if (data2[0]) return { lat: parseFloat(data2[0].lat), lng: parseFloat(data2[0].lon) };
+  } catch (err) {
+    console.error('[Geocode] Error:', err);
+  }
+  return null;
+}
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(
@@ -164,6 +186,17 @@ export async function PUT(
         params.id,
       ]
     );
+
+    // Auto-geocode if address changed and no coordinates provided
+    if ((address || city) && !latitude && !longitude) {
+      const current = await getOne('SELECT address, city, state, latitude, longitude FROM properties WHERE id = $1', [params.id]);
+      if (current && !current.latitude && !current.longitude) {
+        const coords = await geocodeAddress(current.address, current.city, current.state);
+        if (coords) {
+          await query('UPDATE properties SET latitude = $1, longitude = $2 WHERE id = $3', [coords.lat, coords.lng, params.id]);
+        }
+      }
+    }
 
     // Handle image updates if imageUrls is provided
     if (imageUrls && Array.isArray(imageUrls)) {

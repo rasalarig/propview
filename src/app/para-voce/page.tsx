@@ -28,7 +28,7 @@ const benefits = [
   },
   {
     icon: Eye,
-    title: "Reels de Imóveis",
+    title: "Tours de Imóveis",
     description:
       "Apresente seus imóveis em formato de vídeo curto, como no Instagram. Mais engajamento, mais visitas.",
   },
@@ -156,7 +156,7 @@ const faqs = [
   {
     question: "Como os compradores encontram meus imóveis?",
     answer:
-      "Através da busca inteligente com IA, reels de imóveis, alertas automáticos para compradores com perfil compatível e nossa plataforma de divulgação. Quanto mais completo o cadastro, maior o alcance.",
+      "Através da busca inteligente com IA, tours de imóveis, alertas automáticos para compradores com perfil compatível e nossa plataforma de divulgação. Quanto mais completo o cadastro, maior o alcance.",
   },
   {
     question: "Vocês oferecem suporte?",

@@ -104,7 +104,7 @@ export function ReelsFeed() {
     );
   }
 
-  // Reels mode — fullscreen fixed overlay when there ARE properties
+  // Tours mode — fullscreen fixed overlay when there ARE properties
   return (
     <div className="fixed inset-0 top-14 bg-black z-40">
       <div className="h-full bg-black flex items-center justify-center overflow-hidden">

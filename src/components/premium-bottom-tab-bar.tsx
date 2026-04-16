@@ -15,7 +15,7 @@ const publicTabs = [
 const authedTabs = [
   { href: "/", icon: ArrowLeft, label: "Site" },
   { href: "/premium", icon: Crown, label: "Premium" },
-  { href: "/premium/reels", icon: Film, label: "Reels" },
+  { href: "/premium/reels", icon: Film, label: "Tours" },
   { href: "/premium/imoveis", icon: Home, label: "Imóveis" },
 ];
 

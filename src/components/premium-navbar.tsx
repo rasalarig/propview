@@ -76,7 +76,7 @@ export function PremiumNavbar() {
           </Link>
           <Link href="/premium/reels" className="text-sm text-amber-100/60 hover:text-amber-100 transition-colors flex items-center gap-1">
             <Film className="w-3.5 h-3.5" />
-            Reels
+            Tours
           </Link>
 
           {!loading && user && user.is_premium && (

@@ -650,7 +650,7 @@ export default function MeusImoveisPage() {
 
                     {/* Video Script */}
                     <ScriptSection
-                      title="Roteiro de Vídeo (Reels / TikTok)"
+                      title="Roteiro de Vídeo (Tours / TikTok)"
                       content={adScript.video_script}
                       section="video"
                       copiedSection={copiedSection}

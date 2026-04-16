@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { ValuationResult } from "@/lib/valuation-score";
 
 interface ValuationScoreProps {
@@ -212,17 +214,96 @@ function FactorRow({
   );
 }
 
-// ─── Compact badge (for property cards) ──────────────────────────────────
+// ─── Compact badge with hover tooltip (portal-based, never clipped) ──────
 
 export function ValuationScoreBadge({ result }: { result: ValuationResult }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
   const colors = COLOR_MAP[result.color] ?? COLOR_MAP.emerald;
+
+  const updatePos = useCallback(() => {
+    if (!badgeRef.current) return;
+    const rect = badgeRef.current.getBoundingClientRect();
+    let left = rect.left;
+    // Keep tooltip within viewport (w-72 = 288px)
+    if (left + 288 > window.innerWidth) left = window.innerWidth - 296;
+    if (left < 8) left = 8;
+    setPos({ top: rect.bottom + 8, left });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    updatePos();
+    window.addEventListener("scroll", updatePos, true);
+    window.addEventListener("resize", updatePos);
+    return () => {
+      window.removeEventListener("scroll", updatePos, true);
+      window.removeEventListener("resize", updatePos);
+    };
+  }, [open, updatePos]);
+
   return (
     <div
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${colors.bg} ${colors.text} border ${colors.border}`}
-      title={`Potencial de Valorização: ${result.score}/100 — ${result.classification}`}
+      className="inline-block"
+      ref={badgeRef}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
     >
-      <span>{result.score}</span>
-      <span className="font-normal opacity-70">/ 100</span>
+      <div
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold cursor-help ${colors.bg} ${colors.text} border ${colors.border}`}
+      >
+        <span>{result.score}</span>
+        <span className="font-normal opacity-70">/ 100</span>
+      </div>
+
+      {open && pos && createPortal(
+        <div
+          className="fixed z-[9999] w-72 bg-zinc-900 border border-border/60 rounded-lg shadow-2xl p-3 space-y-2"
+          style={{ top: pos.top, left: pos.left }}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between pb-1 border-b border-border/30">
+            <span className="text-xs font-semibold text-white">Índice de Valorização</span>
+            <span className={`text-xs font-bold ${colors.text}`}>
+              {result.score}/100 — {result.classification}
+            </span>
+          </div>
+
+          {/* Factor breakdown */}
+          {result.factors.map((f) => {
+            const pct = f.maxScore > 0 ? Math.round((f.score / f.maxScore) * 100) : 0;
+            let barColor = "bg-emerald-500";
+            if (pct < 40) barColor = "bg-red-500";
+            else if (pct < 60) barColor = "bg-orange-500";
+            else if (pct < 80) barColor = "bg-yellow-500";
+
+            return (
+              <div key={f.name} className="space-y-0.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-zinc-300">{f.name}</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">{f.score}/{f.maxScore}</span>
+                </div>
+                <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${barColor}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <p className="text-[9px] text-zinc-500 leading-tight">{f.description}</p>
+              </div>
+            );
+          })}
+
+          {/* Disclaimer */}
+          <p className="text-[8px] text-zinc-600 pt-1 border-t border-border/20">
+            Score estimado. Não constitui avaliação profissional.{result.dataSource ? ` ${result.dataSource}.` : ""}
+          </p>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -245,7 +326,7 @@ export function ValuationScore({ result, compact = false }: ValuationScoreProps)
           <span
             className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${colors.bg} ${colors.text} border ${colors.border}`}
           >
-            {result.classification} Potencial
+            {result.classification}
           </span>
           <p className="text-xs text-muted-foreground mt-1">
             Score {result.score} / 100
@@ -265,7 +346,7 @@ export function ValuationScore({ result, compact = false }: ValuationScoreProps)
 
       {/* Disclaimer */}
       <p className="text-[11px] text-muted-foreground/60 leading-relaxed border-t border-border/30 pt-3">
-        Score estimado com base nas características do anúncio. Não constitui avaliação profissional.
+        Índice estimado. Não constitui avaliação profissional.{result.dataSource ? ` ${result.dataSource}.` : ""}
       </p>
     </div>
   );

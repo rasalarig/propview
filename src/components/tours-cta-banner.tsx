@@ -37,7 +37,7 @@ export function ToursCTABanner() {
               Descubra imóveis em vídeo
             </p>
             <p className="text-xs text-emerald-200/80 mt-0.5 leading-snug">
-              Navegue pelos melhores imóveis no estilo reels — sem precisar criar conta.
+              Navegue pelos melhores imóveis no estilo tours — sem precisar criar conta.
             </p>
           </div>
         </div>

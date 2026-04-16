@@ -1,27 +1,21 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMapEvents,
-} from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useCallback, useRef } from "react";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
-// Fix Leaflet default marker icon issue in Next.js
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
+const darkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#212121" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+  { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#757575" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
+  { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#383838" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212121" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#1a3a4a" }] },
+];
 
 interface MapPickerProps {
   latitude: number | null;
@@ -29,34 +23,44 @@ interface MapPickerProps {
   onChange: (coords: { lat: number | null; lng: number | null }) => void;
 }
 
-function ClickHandler({
-  onClick,
-}: {
-  onClick: (lat: number, lng: number) => void;
-}) {
-  useMapEvents({
-    click(e) {
-      onClick(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
-}
-
 export default function MapPicker({
   latitude,
   longitude,
   onChange,
 }: MapPickerProps) {
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "",
+    id: "google-map-script",
+  });
+
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [lat, setLat] = useState<string>(latitude?.toString() || "");
   const [lng, setLng] = useState<string>(longitude?.toString() || "");
 
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
+
   const handleMapClick = useCallback(
-    (newLat: number, newLng: number) => {
-      const roundedLat = Math.round(newLat * 10000) / 10000;
-      const roundedLng = Math.round(newLng * 10000) / 10000;
-      setLat(roundedLat.toString());
-      setLng(roundedLng.toString());
-      onChange({ lat: roundedLat, lng: roundedLng });
+    (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng) return;
+      const newLat = Math.round(e.latLng.lat() * 10000) / 10000;
+      const newLng = Math.round(e.latLng.lng() * 10000) / 10000;
+      setLat(newLat.toString());
+      setLng(newLng.toString());
+      onChange({ lat: newLat, lng: newLng });
+    },
+    [onChange]
+  );
+
+  const handleMarkerDrag = useCallback(
+    (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng) return;
+      const newLat = Math.round(e.latLng.lat() * 10000) / 10000;
+      const newLng = Math.round(e.latLng.lng() * 10000) / 10000;
+      setLat(newLat.toString());
+      setLng(newLng.toString());
+      onChange({ lat: newLat, lng: newLng });
     },
     [onChange]
   );
@@ -69,16 +73,21 @@ export default function MapPicker({
     }
     const numLat = field === "lat" ? parseFloat(value) : parseFloat(lat);
     const numLng = field === "lng" ? parseFloat(value) : parseFloat(lng);
-    onChange({
-      lat: isNaN(numLat) ? null : numLat,
-      lng: isNaN(numLng) ? null : numLng,
-    });
+    const validLat = isNaN(numLat) ? null : numLat;
+    const validLng = isNaN(numLng) ? null : numLng;
+    onChange({ lat: validLat, lng: validLng });
+    // Pan map to manual coords if both valid
+    if (validLat !== null && validLng !== null && mapRef.current) {
+      mapRef.current.panTo({ lat: validLat, lng: validLng });
+    }
   };
 
-  const center: [number, number] = [
-    latitude || -23.5,
-    longitude || -48.0,
-  ];
+  const center = {
+    lat: latitude || -23.5,
+    lng: longitude || -48.0,
+  };
+
+  const defaultZoom = latitude && longitude ? 15 : 8;
 
   return (
     <div className="space-y-3">
@@ -88,21 +97,40 @@ export default function MapPicker({
       </div>
 
       <div className="h-64 rounded-xl border border-border/50 overflow-hidden">
-        <MapContainer
-          center={center}
-          zoom={latitude && longitude ? 15 : 8}
-          style={{ height: "100%", width: "100%" }}
-          className="z-0"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ClickHandler onClick={handleMapClick} />
-          {latitude && longitude && (
-            <Marker position={[latitude, longitude]} />
-          )}
-        </MapContainer>
+        {loadError ? (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            <p className="text-sm">Erro ao carregar o mapa</p>
+          </div>
+        ) : !isLoaded ? (
+          <div className="h-full flex items-center justify-center text-muted-foreground bg-card">
+            <p className="text-sm">Carregando mapa...</p>
+          </div>
+        ) : (
+          <GoogleMap
+            mapContainerStyle={{ height: "100%", width: "100%" }}
+            center={center}
+            zoom={defaultZoom}
+            onLoad={onMapLoad}
+            onClick={handleMapClick}
+            options={{
+              styles: darkMapStyle,
+              scrollwheel: false,
+              disableDefaultUI: false,
+              zoomControl: true,
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: false,
+            }}
+          >
+            {latitude && longitude && (
+              <Marker
+                position={{ lat: latitude, lng: longitude }}
+                draggable
+                onDragEnd={handleMarkerDrag}
+              />
+            )}
+          </GoogleMap>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

@@ -3,6 +3,29 @@ import { getOne, query } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { checkAlertsForProperty } from '@/lib/alerts';
 
+async function geocodeAddress(address: string, city: string, state: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const q = encodeURIComponent(`${address}, ${city}, ${state}, Brasil`);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`, {
+      headers: { 'User-Agent': 'MelhorMetro/1.0' },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    // Fallback: try just city + state
+    const q2 = encodeURIComponent(`${city}, ${state}, Brasil`);
+    const res2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${q2}&format=json&limit=1&countrycodes=br`, {
+      headers: { 'User-Agent': 'MelhorMetro/1.0' },
+    });
+    if (!res2.ok) return null;
+    const data2 = await res2.json();
+    if (data2[0]) return { lat: parseFloat(data2[0].lat), lng: parseFloat(data2[0].lon) };
+  } catch (err) {
+    console.error('[Geocode] Error:', err);
+  }
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Require authentication
@@ -87,6 +110,19 @@ export async function POST(request: NextRequest) {
         condominium_id != null ? condominium_id : null,
       ]
     );
+
+    // Auto-geocode address if no coordinates
+    if (property && (!property.latitude || !property.longitude)) {
+      const coords = await geocodeAddress(address, city, state);
+      if (coords) {
+        await query(
+          'UPDATE properties SET latitude = $1, longitude = $2 WHERE id = $3',
+          [coords.lat, coords.lng, property.id]
+        );
+        property.latitude = coords.lat;
+        property.longitude = coords.lng;
+      }
+    }
 
     // Insert image URLs into property_images
     if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) {

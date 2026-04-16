@@ -175,7 +175,7 @@ export function LeadsThermometer() {
         <Card className="p-12 text-center bg-card border-border/50">
           <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
           <p className="text-muted-foreground">
-            {filter ? "Nenhum lead com esta temperatura." : "Nenhum lead registrado ainda. Os leads sao gerados automaticamente quando usuarios interagem com os reels."}
+            {filter ? "Nenhum lead com esta temperatura." : "Nenhum lead registrado ainda. Os leads sao gerados automaticamente quando usuarios interagem com os tours."}
           </p>
         </Card>
       ) : (
